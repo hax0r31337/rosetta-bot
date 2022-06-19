@@ -1,4 +1,6 @@
 package me.liuli.rosetta.entity
 
-class EntityPlayer : Entity() {
+open class EntityPlayer : Entity() {
+
+    override val type = "player"
 }

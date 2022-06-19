@@ -24,3 +24,11 @@ open class Event {
         }
     }
 }
+
+open class EventCancellable : Event() {
+    var isCancelled = false
+
+    fun cancel() {
+        isCancelled = true
+    }
+}

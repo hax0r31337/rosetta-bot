@@ -17,9 +17,10 @@ object Main {
         val proto = AdaptProtocol()
         val bot = MinecraftBot(MinecraftAccount.offline("RosettaBot"), proto)
 
-        bot.registerListener(FuncListener(DisconnectEvent::class.java) {
-            println("Disconnected: ${it.reason}")
-        })
+//        bot.registerListener(FuncListener(DisconnectEvent::class.java) {
+//            println("Disconnected: ${it.reason}")
+//        })
+        bot.registerListeners(*(EventListener().listeners))
 
         bot.connect("127.0.0.1", 25565)
     }

@@ -7,4 +7,6 @@ interface MinecraftProtocol {
     fun setHandler(handler: BotProtocolHandler)
 
     fun connect(host: String, port: Int, proxy: Proxy)
+
+    fun disconnect()
 }
