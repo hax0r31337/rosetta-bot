@@ -2,6 +2,10 @@ package test.rosetta.protocol
 
 import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftConstants
+import com.github.steveice10.mc.protocol.data.game.PlayerListEntry
+import com.github.steveice10.mc.protocol.data.game.PlayerListEntryAction
+import com.github.steveice10.mc.protocol.data.game.entity.attribute.Attribute
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata
 import com.github.steveice10.mc.protocol.data.game.entity.player.Hand
 import com.github.steveice10.mc.protocol.data.game.setting.ChatVisibility
 import com.github.steveice10.mc.protocol.data.game.setting.SkinPart
@@ -10,9 +14,20 @@ import com.github.steveice10.mc.protocol.packet.ingame.client.ClientPluginMessag
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionRotationPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerChatPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerDifficultyPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerPlayerListEntryPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityMetadataPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityPropertiesPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerAbilitiesPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerHealthPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerSetExperiencePacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerChunkDataPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerSpawnPositionPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerUpdateTimePacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerWorldBorderPacket
 import com.github.steveice10.packetlib.Client
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent
 import com.github.steveice10.packetlib.event.session.PacketReceivedEvent
@@ -22,6 +37,7 @@ import me.liuli.rosetta.bot.BotProtocolHandler
 import me.liuli.rosetta.bot.event.DisconnectEvent
 import me.liuli.rosetta.bot.MinecraftBot
 import me.liuli.rosetta.bot.MinecraftProtocol
+import me.liuli.rosetta.world.data.NetworkPlayerInfo
 import test.rosetta.conv.CommonConverter
 import java.net.Proxy
 
@@ -62,12 +78,11 @@ class AdaptProtocol : MinecraftProtocol {
     }
 
     private fun handlePacketIn(pk: MinecraftPacket) {
-        if (pk is ServerChunkDataPacket) {
-            return
-        }
         when(pk) {
             is ServerJoinGamePacket -> {
-                handler.onJoinGame(pk.entityId, CommonConverter.gamemode(pk.gameMode), CommonConverter.difficulty(pk.difficulty))
+                handler.onJoinGame(pk.entityId)
+                handler.onGamemodeChange(CommonConverter.gamemode(pk.gameMode))
+                handler.onDifficultyChange(CommonConverter.difficulty(pk.difficulty))
                 client.session.send(ClientSettingsPacket("en_US", 8, ChatVisibility.FULL, true, SkinPart.values(), Hand.MAIN_HAND))
                 client.session.send(ClientPluginMessagePacket("MC|Brand", "vanilla".toByteArray()))
                 handler.onConnected()
@@ -78,10 +93,87 @@ class AdaptProtocol : MinecraftProtocol {
                     client.session.send(ClientPlayerPositionRotationPacket(false, pk.x, pk.y, pk.z, pk.yaw, pk.pitch))
                 }
             }
+            is ServerDifficultyPacket -> {
+                handler.onDifficultyChange(CommonConverter.difficulty(pk.difficulty))
+            }
+            is ServerChatPacket -> {
+                handler.onChat(pk.message.fullText, pk.message.toJsonString())
+            }
+            is ServerUpdateTimePacket -> {
+                handler.onTimeUpdate(pk.time)
+            }
+            is ServerPlayerAbilitiesPacket -> {
+                handler.onAbilitiesChange(pk.flying, pk.canFly, pk.invincible)
+                handler.onMoveSpeedChange(pk.walkSpeed, pk.flySpeed)
+            }
+            is ServerPlayerHealthPacket -> {
+                handler.onHealthChange(pk.health, handler.bot.player.maxHealth, handler.bot.player.absorption)
+                handler.onFoodChange(pk.food.toFloat(), pk.saturation)
+            }
+            is ServerSpawnPositionPacket -> {
+                handler.onSpawnPositionChange(pk.position.x, pk.position.y, pk.position.z)
+            }
+            is ServerEntityPropertiesPacket -> {
+                handleProperties(pk.entityId, pk.attributes)
+            }
+            is ServerEntityMetadataPacket -> {
+                handleMetadata(pk.entityId, pk.metadata)
+            }
+            is ServerPlayerSetExperiencePacket -> {
+                handler.onExperienceChange(pk.slot, pk.level)
+            }
+            is ServerPlayerListEntryPacket -> {
+                handlePlayerList(pk.action, pk.entries)
+            }
             is ServerChunkDataPacket -> {
 
             }
+//            else -> println(pk)
         }
-//        println(pk)
+    }
+
+    private fun handlePlayerList(action: PlayerListEntryAction, list: Array<PlayerListEntry>) {
+        val result = mutableListOf<NetworkPlayerInfo>()
+        val remove = mutableListOf<NetworkPlayerInfo>()
+        list.forEach {
+            var entry = handler.bot.world.playerList[it.profile.id]
+            if (action == PlayerListEntryAction.ADD_PLAYER) {
+                entry = NetworkPlayerInfo(it.profile.id, it.profile.name, CommonConverter.gamemode(it.gameMode), it.ping, it.displayName?.fullText)
+            } else if (entry == null) {
+                return@forEach // equals to java continue
+            }
+            when(action) {
+                PlayerListEntryAction.UPDATE_GAMEMODE -> {
+                    entry.gamemode = CommonConverter.gamemode(it.gameMode)
+                }
+                PlayerListEntryAction.UPDATE_LATENCY -> {
+                    entry.latency = it.ping
+                }
+                PlayerListEntryAction.UPDATE_DISPLAY_NAME -> {
+                    entry.displayName = it.displayName?.fullText
+                }
+                PlayerListEntryAction.REMOVE_PLAYER -> {
+                    remove.add(entry)
+                    return@forEach
+                }
+            }
+            result.add(entry)
+        }
+        if (result.isNotEmpty()) {
+            handler.onPlayerListUpdate(result)
+        }
+        if (remove.isNotEmpty()) {
+            handler.onPlayerListRemove(remove)
+        }
+    }
+
+    private fun handleMetadata(entityId: Int, metadata: Array<EntityMetadata>) {
+//        println(entityId)
+//        println(metadata)
+    }
+
+    private fun handleProperties(entityId: Int, properties: List<Attribute>) {
+//        println(entityId)
+//        println(properties)
     }
 }
