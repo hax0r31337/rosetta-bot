@@ -8,6 +8,7 @@ open class Entity {
 
     open var id = 0
     open val type = ""
+    open var displayName = ""
     open val position = Vec3d()
     open val rotation = Vec2f()
 

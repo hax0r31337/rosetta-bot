@@ -5,6 +5,7 @@ import me.liuli.rosetta.bot.event.Listener
 import me.liuli.rosetta.entity.client.EntityClientPlayer
 import me.liuli.rosetta.world.World
 import java.net.Proxy
+import kotlin.concurrent.thread
 
 class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtocol) {
 
@@ -24,8 +25,27 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
         if (isConnected) {
             throw IllegalStateException("Already connected")
         }
-        isConnected = true
         protocol.connect(host, port, proxy)
+    }
+
+    fun connectAsync(host: String, port: Int, proxy: Proxy = Proxy.NO_PROXY) {
+        if (isConnected) {
+            throw IllegalStateException("Already connected")
+        }
+        thread {
+            protocol.connect(host, port, proxy)
+        }
+        while(!isConnected) {
+            Thread.sleep(10)
+        }
+    }
+
+    fun disconnect() {
+        protocol.disconnect()
+    }
+
+    fun chat(message: String) {
+        protocol.chat(message)
     }
 
     fun emit(event: Event) {

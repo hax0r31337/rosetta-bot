@@ -4,7 +4,8 @@ import me.liuli.rosetta.bot.event.DisconnectEvent
 import me.liuli.rosetta.bot.MinecraftAccount
 import me.liuli.rosetta.bot.MinecraftBot
 import me.liuli.rosetta.bot.event.FuncListener
-import test.rosetta.protocol.AdaptProtocol
+import test.rosetta.proto.AdaptProtocol
+import kotlin.concurrent.thread
 
 object Main {
 
@@ -22,6 +23,6 @@ object Main {
 //        })
         bot.registerListeners(*(EventListener().listeners))
 
-        bot.connect("127.0.0.1", 25565)
+        bot.connectAsync("127.0.0.1", 25565)
     }
 }

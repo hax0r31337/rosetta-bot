@@ -11,6 +11,7 @@ import me.liuli.rosetta.world.data.NetworkPlayerInfo
 class BotProtocolHandler(val bot: MinecraftBot) {
 
     fun onConnected() {
+        bot.isConnected = true
         bot.emit(ConnectedEvent())
     }
 
