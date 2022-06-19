@@ -7,6 +7,7 @@ class EntityClientPlayer : EntityPlayer() {
 
     override val type = "client"
     val motion = Vec3f()
+    var onGround = false
 
     // abilities
     var invincible = false

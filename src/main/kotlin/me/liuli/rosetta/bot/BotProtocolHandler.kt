@@ -7,11 +7,17 @@ import me.liuli.rosetta.bot.event.TeleportEvent
 import me.liuli.rosetta.world.data.EnumDifficulty
 import me.liuli.rosetta.world.data.EnumGameMode
 import me.liuli.rosetta.world.data.NetworkPlayerInfo
+import kotlin.concurrent.thread
 
 class BotProtocolHandler(val bot: MinecraftBot) {
 
     fun onConnected() {
-        bot.isConnected = true
+        if (!bot.isConnected) {
+            bot.isConnected = true
+            thread {
+                bot.startTick()
+            }
+        }
         bot.emit(ConnectedEvent())
     }
 

@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation("com.github.liulihaocai:MCProtocolLib:2b971afd5e")
+    testImplementation("com.github.liulihaocai:MCProtocolLib:81b1ec12c6")
     testImplementation("com.github.GeyserMC:OpenNBT:1.0")
 }
 

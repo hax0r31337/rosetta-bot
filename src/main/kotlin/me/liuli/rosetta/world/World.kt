@@ -18,5 +18,7 @@ class World {
 
     val spawn = Vec3i()
 
-    // TODO: tick time
+    fun tick() {
+
+    }
 }

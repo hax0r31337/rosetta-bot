@@ -21,3 +21,8 @@ class TeleportEvent(var x: Double, var y: Double, var z: Double, var yaw: Float,
  * called when received chat message from server
  */
 class ChatReceiveEvent(var message: String, var json: String) : Event()
+
+/**
+ * tick... tack...
+ */
+class TickEvent : Event()

@@ -21,7 +21,7 @@ object Main {
 //        bot.registerListener(FuncListener(DisconnectEvent::class.java) {
 //            println("Disconnected: ${it.reason}")
 //        })
-        bot.registerListeners(*(EventListener().listeners))
+        bot.registerListeners(*(EventListener(bot).listeners))
 
         bot.connectAsync("127.0.0.1", 25565)
     }

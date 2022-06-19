@@ -63,7 +63,7 @@ class AdaptProtocol : MinecraftProtocol {
         }
         val account = handler.bot.account
         val proto = com.github.steveice10.mc.protocol.MinecraftProtocol(GameProfile(account.uuid, account.username), account.accessToken)
-        this.client = Client(host, port, proto, TcpSessionFactory(proxy))
+        this.client = Client(host, port, proto, TcpSessionFactory(CommonConverter.proxy(proxy)))
         client.session.setFlag(MinecraftConstants.AUTH_PROXY_KEY, proxy)
 
         client.session.addListener(object : SessionAdapter() {
