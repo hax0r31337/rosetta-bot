@@ -2,7 +2,6 @@ package me.liuli.rosetta.bot.event
 
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import java.util.Collections
 
 abstract class Listener<T : Event>(val eventType: Class<T>) {
 

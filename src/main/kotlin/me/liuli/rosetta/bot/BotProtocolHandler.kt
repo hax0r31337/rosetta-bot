@@ -1,12 +1,10 @@
 package me.liuli.rosetta.bot
 
-import me.liuli.rosetta.bot.event.ChatReceiveEvent
-import me.liuli.rosetta.bot.event.ConnectedEvent
-import me.liuli.rosetta.bot.event.DisconnectEvent
-import me.liuli.rosetta.bot.event.TeleportEvent
-import me.liuli.rosetta.world.data.EnumDifficulty
-import me.liuli.rosetta.world.data.EnumGameMode
-import me.liuli.rosetta.world.data.NetworkPlayerInfo
+import me.liuli.rosetta.bot.event.*
+import me.liuli.rosetta.entity.Entity
+import me.liuli.rosetta.entity.EntityLiving
+import me.liuli.rosetta.world.data.*
+import java.util.*
 import kotlin.concurrent.thread
 
 class BotProtocolHandler(val bot: MinecraftBot) {
@@ -39,7 +37,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         bot.world.difficulty = difficulty
     }
 
-    fun onTeleport(x: Double, y: Double, z: Double, yaw: Float, pitch: Float): Boolean {
+    fun onPlayerTeleport(x: Double, y: Double, z: Double, yaw: Float, pitch: Float): Boolean {
         val event = TeleportEvent(x, y, z, yaw, pitch)
         bot.emit(event)
 
@@ -50,11 +48,8 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         player.motion.x = 0f
         player.motion.y = 0f
         player.motion.z = 0f
-        player.position.x = event.x
-        player.position.y = event.y
-        player.position.z = event.z
-        player.rotation.x = event.yaw
-        player.rotation.y = event.pitch
+        player.position.set(event.x, event.y, event.z)
+        player.rotation.set(event.yaw, event.pitch)
         player.isSpawned = true
 
         return true
@@ -84,16 +79,18 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         bot.player.foodSaturation = foodSaturation
     }
 
-    fun onHealthChange(health: Float, maxHealth: Float, absorption: Float) {
-        bot.player.health = health
-        bot.player.maxHealth = maxHealth
-        bot.player.absorption = absorption
+    fun onHealthChange(entityId: Int, health: Float, maxHealth: Float, absorption: Float) {
+        val entity = bot.world.entities[entityId] ?: return
+        if (entity !is EntityLiving) {
+            return
+        }
+        entity.health = health
+        entity.maxHealth = maxHealth
+        entity.absorption = absorption
     }
 
     fun onSpawnPositionChange(x: Int, y: Int, z: Int) {
-        bot.world.spawn.x = x
-        bot.world.spawn.y = y
-        bot.world.spawn.z = z
+        bot.world.spawn.set(x, y, z)
     }
 
     fun onExperienceChange(experience: Float, level: Int) {
@@ -111,5 +108,82 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         list.forEach {
             bot.world.playerList.remove(it.uuid)
         }
+    }
+
+    fun spawnEntity(instance: Entity) {
+        bot.world.entities[instance.id] = instance
+    }
+
+    fun onSetMotion(entityId: Int, motionX: Float, motionY: Float, motionZ: Float) {
+        if (entityId == bot.player.id) {
+            bot.player.motion.set(motionX, motionY, motionZ)
+        }
+    }
+
+    fun onTeleport(entityId: Int, x: Double, y: Double, z: Double, yaw: Float, pitch: Float, onGround: Boolean) {
+        val entity = bot.world.entities[entityId] ?: return
+        entity.position.set(x, y, z)
+        entity.rotation.set(yaw, pitch)
+    }
+
+    fun onMovement(entityId: Int, onGround: Boolean) {
+//        val entity = bot.world.entities[entityId] ?: return
+    }
+
+    fun onMovement(entityId: Int, onGround: Boolean, x: Double, y: Double, z: Double) {
+        val entity = bot.world.entities[entityId] ?: return
+        entity.position.set(x, y, z)
+    }
+
+    fun onMovement(entityId: Int, onGround: Boolean, x: Double, y: Double, z: Double, yaw: Float, pitch: Float) {
+        val entity = bot.world.entities[entityId] ?: return
+        entity.position.set(x, y, z)
+        entity.rotation.set(yaw, pitch)
+    }
+
+    fun onMovement(entityId: Int, onGround: Boolean, yaw: Float, pitch: Float) {
+        val entity = bot.world.entities[entityId] ?: return
+        entity.rotation.set(yaw, pitch)
+    }
+
+
+    fun onRemoveEntity(entityId: Int) {
+        bot.world.entities.remove(entityId)
+    }
+
+    fun onWeatherUpdate(rain: Float, thunder: Float) {
+        bot.world.rainStrength = rain
+        bot.world.thunderStrength = thunder
+    }
+
+    fun onPlayerListInfoUpdate(header: String, footer: String) {
+        bot.world.playerListInfo = header to footer
+    }
+
+    fun onTitle(type: EnumTitleType, message: String, fadeIn: Int, stay: Int, fadeOut: Int) {
+        bot.emit(TitleEvent(type, message, fadeIn, stay, fadeOut))
+    }
+
+    fun setBossBar(bossBar: BossBar) {
+        bot.world.bossBar[bossBar.uuid] = bossBar
+    }
+
+    fun removeBossBar(uuid: UUID) {
+        bot.world.bossBar.remove(uuid)
+    }
+
+    fun setScoreboard(sb: Scoreboard) {
+        bot.world.scoreboard[sb.name] = sb
+    }
+
+    fun removeScoreboard(sb: String) {
+        bot.world.scoreboard.remove(sb)
+//        if (bot.world.displayScoreboardName == sb) {
+//            bot.world.displayScoreboardName = ""
+//        }
+    }
+
+    fun displayScoreboard(sb: String) {
+        bot.world.displayScoreboardName = sb
     }
 }

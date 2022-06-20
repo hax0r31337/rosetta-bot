@@ -1,11 +1,8 @@
 package test.rosetta
 
-import me.liuli.rosetta.bot.event.DisconnectEvent
 import me.liuli.rosetta.bot.MinecraftAccount
 import me.liuli.rosetta.bot.MinecraftBot
-import me.liuli.rosetta.bot.event.FuncListener
 import test.rosetta.proto.AdaptProtocol
-import kotlin.concurrent.thread
 
 object Main {
 

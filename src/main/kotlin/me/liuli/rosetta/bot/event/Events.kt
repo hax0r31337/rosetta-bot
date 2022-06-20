@@ -1,5 +1,7 @@
 package me.liuli.rosetta.bot.event
 
+import me.liuli.rosetta.world.data.EnumTitleType
+
 // event from server
 
 /**
@@ -26,3 +28,8 @@ class ChatReceiveEvent(var message: String, var json: String) : Event()
  * tick... tack...
  */
 class TickEvent : Event()
+
+/**
+ * called when display the title
+ */
+class TitleEvent(val type: EnumTitleType, val message: String, val fadeIn: Int, val stay: Int, val fadeOut: Int) : Event()

@@ -2,7 +2,6 @@ package me.liuli.rosetta.entity
 
 import me.liuli.rosetta.util.vec.Vec2f
 import me.liuli.rosetta.util.vec.Vec3d
-import me.liuli.rosetta.util.vec.Vec3f
 
 open class Entity {
 
