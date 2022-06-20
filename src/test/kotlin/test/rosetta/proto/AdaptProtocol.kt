@@ -3,6 +3,7 @@ package test.rosetta.proto
 import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftConstants
 import com.github.steveice10.mc.protocol.data.game.*
+import com.github.steveice10.mc.protocol.data.game.chunk.Column
 import com.github.steveice10.mc.protocol.data.game.entity.attribute.Attribute
 import com.github.steveice10.mc.protocol.data.game.entity.attribute.AttributeType
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata
@@ -14,6 +15,7 @@ import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardPosition
 import com.github.steveice10.mc.protocol.data.game.scoreboard.TeamAction
 import com.github.steveice10.mc.protocol.data.game.setting.ChatVisibility
 import com.github.steveice10.mc.protocol.data.game.setting.SkinPart
+import com.github.steveice10.mc.protocol.data.game.world.block.BlockState
 import com.github.steveice10.mc.protocol.data.game.world.notify.ClientNotification
 import com.github.steveice10.mc.protocol.data.game.world.notify.RainStrengthValue
 import com.github.steveice10.mc.protocol.data.game.world.notify.ThunderStrengthValue
@@ -22,11 +24,7 @@ import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientPluginMessagePacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientResourcePackStatusPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerMovementPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionRotationPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerRotationPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerStatePacket
+import com.github.steveice10.mc.protocol.packet.ingame.client.player.*
 import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientConfirmTransactionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.*
@@ -55,11 +53,11 @@ import me.liuli.rosetta.bot.MinecraftProtocol
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.entity.EntityPlayer
-import me.liuli.rosetta.world.data.BossBar
-import me.liuli.rosetta.world.data.EnumTitleType
-import me.liuli.rosetta.world.data.NetworkPlayerInfo
-import me.liuli.rosetta.world.data.Scoreboard
+import me.liuli.rosetta.world.Chunk
+import me.liuli.rosetta.world.block.Block
+import me.liuli.rosetta.world.data.*
 import test.rosetta.conv.CommonConverter
+import test.rosetta.event.PacketReceiveEvent
 import java.net.Proxy
 
 class AdaptProtocol : MinecraftProtocol {
@@ -82,7 +80,11 @@ class AdaptProtocol : MinecraftProtocol {
 
         client.session.addListener(object : SessionAdapter() {
             override fun packetReceived(event: PacketReceivedEvent) {
-                handlePacketIn(event.getPacket())
+                val myEvent = PacketReceiveEvent(event.getPacket())
+                handler.bot.emit(myEvent)
+                if (!myEvent.isCancelled) {
+                    handlePacketIn(myEvent.packet)
+                }
             }
 
             override fun disconnected(event: DisconnectedEvent) {
@@ -184,7 +186,7 @@ class AdaptProtocol : MinecraftProtocol {
         client.session.send(ClientChatPacket(message))
     }
 
-    private fun handlePacketIn(pk: MinecraftPacket) {
+    fun handlePacketIn(pk: MinecraftPacket) {
         when(pk) {
             is ServerJoinGamePacket -> {
                 handler.onJoinGame(pk.entityId)
@@ -248,12 +250,20 @@ class AdaptProtocol : MinecraftProtocol {
                     client.session.send(ClientPlayerPositionRotationPacket(false, pk.x, pk.y, pk.z, pk.yaw, pk.pitch))
                 }
             }
-//            is ServerMultiBlockChangePacket
-            is ServerChunkDataPacket -> {
-
+            is ServerMultiBlockChangePacket -> {
+                pk.records.forEach {
+                    handleBlockChange(it.block, it.position.x, it.position.y, it.position.z)
+                }
             }
-//            is ServerUnloadChunkPacket
-//            is ServerBlockChangePacket
+            is ServerChunkDataPacket -> {
+                handleChunk(pk.column)
+            }
+            is ServerUnloadChunkPacket -> {
+                handler.unloadChunk(pk.x, pk.z)
+            }
+            is ServerBlockChangePacket -> {
+                handleBlockChange(pk.record.block, pk.record.position.x, pk.record.position.y, pk.record.position.z)
+            }
 //            is ServerEntityCollectItemPacket
             is ServerChatPacket -> {
                 if (pk.type == MessageType.NOTIFICATION) {
@@ -325,7 +335,7 @@ class AdaptProtocol : MinecraftProtocol {
 //            is ServerStatisticsPacket
 //            is ServerUnlockRecipesPacket
             is ServerEntityEffectPacket -> {
-
+                handler.addEffect(pk.entityId, PotionEffect(CommonConverter.effect(pk.effect), pk.amplifier, pk.duration))
             }
 //            is ServerCombatPacket
             is ServerDifficultyPacket -> {
@@ -362,7 +372,7 @@ class AdaptProtocol : MinecraftProtocol {
                 handler.onPlayerListInfoUpdate(pk.header.fullText, pk.footer.fullText)
             }
             is ServerEntityRemoveEffectPacket -> {
-
+                handler.removeEffect(pk.entityId, CommonConverter.effect(pk.effect))
             }
             is ServerPlayerListEntryPacket -> {
                 handlePlayerList(pk.action, pk.entries)
@@ -534,5 +544,31 @@ class AdaptProtocol : MinecraftProtocol {
                 }
             }
         }
+    }
+
+    private fun handleChunk(column: Column) {
+        val chunk = Chunk(column.x, column.z)
+        var yPos = 0
+        var i: Int
+        column.chunks.forEach { c ->
+            c ?: return@forEach
+            for(y in 0 until 16) {
+                i = 0
+                for (z in 0 until 16) {
+                    for (x in 0 until 16) {
+                        val bl = c.blocks.get(x, y, z)
+                        chunk.blocks[yPos][i] = Block(bl.id, bl.data, CommonConverter.blockType(bl.id))
+                        i++
+                    }
+                }
+                yPos++
+            }
+        }
+        handler.onChunk(chunk)
+    }
+
+    private fun handleBlockChange(bl: BlockState, x: Int, y: Int, z: Int) {
+        val block = Block(bl.id, bl.data, CommonConverter.blockType(bl.id))
+        handler.onBlockUpdate(x, y, z, block)
     }
 }

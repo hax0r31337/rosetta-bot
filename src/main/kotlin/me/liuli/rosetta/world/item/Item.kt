@@ -1,8 +1,8 @@
-package me.liuli.rosetta.world
+package me.liuli.rosetta.world.item
 
 import com.google.gson.JsonObject
 
-class Item(var id: Int, var count: Int, var damage: Int, val type: Type) {
+data class Item(val id: Int, var count: Int, var damage: Int, val type: Type) {
 
     var additionalData: JsonObject? = null
 

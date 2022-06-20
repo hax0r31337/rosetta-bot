@@ -3,9 +3,10 @@ package me.liuli.rosetta.bot
 import me.liuli.rosetta.bot.event.*
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
+import me.liuli.rosetta.world.Chunk
+import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.*
 import java.util.*
-import kotlin.concurrent.thread
 
 class BotProtocolHandler(val bot: MinecraftBot) {
 
@@ -183,5 +184,28 @@ class BotProtocolHandler(val bot: MinecraftBot) {
 
     fun displayScoreboard(sb: String) {
         bot.world.displayScoreboardName = sb
+    }
+
+    fun addEffect(entityId: Int, effect: PotionEffect) {
+        val entity = bot.world.entities[entityId] as? EntityLiving ?: return
+        entity.effects.removeIf { it.name == effect.name }
+        entity.effects.add(effect)
+    }
+
+    fun removeEffect(entityId: Int, effect: String) {
+        val entity = bot.world.entities[entityId] as? EntityLiving ?: return
+        entity.effects.removeIf { it.name == effect }
+    }
+
+    fun onChunk(chunk: Chunk) {
+        bot.world.setChunk(chunk)
+    }
+
+    fun unloadChunk(x: Int, z: Int) {
+        bot.world.eraseChunkAt(x, z)
+    }
+
+    fun onBlockUpdate(x: Int, y: Int, z: Int, block: Block) {
+
     }
 }

@@ -1,9 +1,11 @@
 package test.rosetta.conv
 
 import com.github.steveice10.mc.protocol.data.game.BossBarColor
+import com.github.steveice10.mc.protocol.data.game.entity.Effect
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode
 import com.github.steveice10.mc.protocol.data.game.setting.Difficulty
 import com.github.steveice10.packetlib.ProxyInfo
+import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.EnumDifficulty
 import me.liuli.rosetta.world.data.EnumGameMode
 import java.awt.Color
@@ -46,6 +48,18 @@ object CommonConverter {
             BossBarColor.YELLOW -> Color(255, 255, 0)
             BossBarColor.PURPLE -> Color(255, 0, 255)
             BossBarColor.WHITE -> Color(255, 255, 255)
+        }
+    }
+
+    fun effect(effect: Effect): String {
+        return effect.name.lowercase()
+    }
+
+    fun blockType(id: Int): Block.Type {
+        return if(id == 0) {
+            Block.Type.AIR
+        } else {
+            Block.Type.SOLID
         }
     }
 }

@@ -1,8 +1,10 @@
 package test.rosetta
 
 import me.liuli.rosetta.bot.MinecraftBot
-import me.liuli.rosetta.bot.event.*
-import me.liuli.rosetta.util.stripColor
+import me.liuli.rosetta.bot.event.ChatReceiveEvent
+import me.liuli.rosetta.bot.event.DisconnectEvent
+import me.liuli.rosetta.bot.event.ListenerSet
+import me.liuli.rosetta.bot.event.TickEvent
 
 class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
@@ -25,4 +27,9 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
     @Listen
     fun onTick(event: TickEvent) {
     }
+
+//    @Listen
+//    fun onPacketReceive(event: PacketReceiveEvent) {
+//        println(event.packet)
+//    }
 }
