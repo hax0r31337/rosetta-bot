@@ -29,7 +29,10 @@ class World {
 
     val spawn = Vec3i()
 
+    var tickExisted = 0L
+
     fun tick() {
         time++
+        tickExisted++
     }
 }

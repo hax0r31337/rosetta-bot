@@ -9,6 +9,9 @@ class EntityClientPlayer : EntityPlayer() {
     val motion = Vec3f()
     var onGround = false
 
+    var sprinting = false
+    var sneaking = false
+
     // abilities
     var invincible = false
     var flying = false

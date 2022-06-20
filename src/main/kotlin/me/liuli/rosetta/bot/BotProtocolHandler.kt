@@ -12,9 +12,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     fun onConnected() {
         if (!bot.isConnected) {
             bot.isConnected = true
-            thread {
-                bot.startTick()
-            }
+            bot.startTick()
         }
         bot.emit(ConnectedEvent())
     }

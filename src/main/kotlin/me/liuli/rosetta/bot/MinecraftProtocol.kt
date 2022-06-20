@@ -10,7 +10,7 @@ interface MinecraftProtocol {
 
     fun disconnect()
 
-    fun move(x: Double, y: Double, z: Double, yaw: Float, pitch: Float, onGround: Boolean)
+    fun move(x: Double, y: Double, z: Double, yaw: Float, pitch: Float, onGround: Boolean, sprint: Boolean, sneak: Boolean)
 
     fun chat(message: String)
 }

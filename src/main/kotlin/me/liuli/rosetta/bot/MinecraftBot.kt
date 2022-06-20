@@ -6,6 +6,9 @@ import me.liuli.rosetta.bot.event.TickEvent
 import me.liuli.rosetta.entity.client.EntityClientPlayer
 import me.liuli.rosetta.world.World
 import java.net.Proxy
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
 class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtocol) {
@@ -13,9 +16,10 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
     val player = EntityClientPlayer()
     val world = World()
     var isConnected = false
-    var tickDelay = 50
+    var tickDelay = 50L
 
     private val handler = BotProtocolHandler(this)
+    private var executor: ScheduledExecutorService? = null
 
     private val listeners = mutableMapOf<Class<out Event>, MutableList<Listener<*>>>()
 
@@ -40,18 +44,20 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
     }
 
     fun startTick() {
-        var lastTime: Long
-        while (isConnected) {
-            lastTime = System.currentTimeMillis() // TODO: better way to do this?
-            this.tick()
-            Thread.sleep(tickDelay - (System.currentTimeMillis() - lastTime).coerceAtLeast(0))
+        if (executor != null) {
+            executor!!.shutdown()
         }
+        executor = Executors.newSingleThreadScheduledExecutor()
+        executor!!.scheduleAtFixedRate({
+            tick()
+        }, 0, tickDelay, TimeUnit.MILLISECONDS)
     }
 
     fun tick() {
         emit(TickEvent())
         world.tick()
-        protocol.move(player.position.x, player.position.y, player.position.z, player.rotation.x, player.rotation.y, player.onGround)
+        protocol.move(player.position.x, player.position.y, player.position.z,
+            player.rotation.x, player.rotation.y, player.onGround, player.sprinting, player.sneaking)
     }
 
     fun disconnect() {

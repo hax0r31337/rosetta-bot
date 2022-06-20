@@ -7,6 +7,7 @@ import com.github.steveice10.mc.protocol.data.game.entity.attribute.Attribute
 import com.github.steveice10.mc.protocol.data.game.entity.attribute.AttributeType
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata
 import com.github.steveice10.mc.protocol.data.game.entity.player.Hand
+import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerState
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ObjectiveAction
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardAction
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardPosition
@@ -25,6 +26,7 @@ import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlaye
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionRotationPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerRotationPacket
+import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerStatePacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientConfirmTransactionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.*
@@ -105,13 +107,32 @@ class AdaptProtocol : MinecraftProtocol {
     private var lastYaw = 0f
     private var lastPitch = 0f
     private var positionUpdateTicks = 0
+    private var lastSprint = false
+    private var lastSneak = false
 
     // title
     private var titleFadeIn = 10
     private var titleStay = 70
     private var titleFadeOut = 20
 
-    override fun move(x: Double, y: Double, z: Double, yawIn: Float, pitchIn: Float, onGround: Boolean) {
+    override fun move(x: Double, y: Double, z: Double, yawIn: Float, pitchIn: Float, onGround: Boolean, sprinting: Boolean, sneaking: Boolean) {
+        if(sprinting != lastSprint) {
+            if (sprinting) {
+                client.session.send(ClientPlayerStatePacket(handler.bot.player.id, PlayerState.START_SPRINTING))
+            } else {
+                client.session.send(ClientPlayerStatePacket(handler.bot.player.id, PlayerState.STOP_SPRINTING))
+            }
+            lastSprint = sprinting
+        }
+        if(sneaking != lastSneak) {
+            if (sneaking) {
+                client.session.send(ClientPlayerStatePacket(handler.bot.player.id, PlayerState.START_SNEAKING))
+            } else {
+                client.session.send(ClientPlayerStatePacket(handler.bot.player.id, PlayerState.STOP_SNEAKING))
+            }
+            lastSneak = sneaking
+        }
+
         // fix GCD sensitivity to bypass some anti-cheat measures
         val sensitivity = 0.5f
         val f = sensitivity * 0.6F + 0.2F
@@ -235,7 +256,11 @@ class AdaptProtocol : MinecraftProtocol {
 //            is ServerBlockChangePacket
 //            is ServerEntityCollectItemPacket
             is ServerChatPacket -> {
-                handler.onChat(pk.message.fullText, pk.message.toJsonString())
+                if (pk.type == MessageType.NOTIFICATION) {
+                    handler.onTitle(EnumTitleType.ACTIONBAR, pk.message.fullText, this.titleFadeIn, this.titleStay, this.titleFadeOut)
+                } else {
+                    handler.onChat(pk.message.fullText, pk.message.toJsonString())
+                }
             }
 //            is ServerEntityAnimationPacket
 //            is ServerPlayerUseBedPacket
