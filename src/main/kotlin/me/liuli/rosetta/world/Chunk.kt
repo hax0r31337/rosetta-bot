@@ -4,15 +4,15 @@ import me.liuli.rosetta.world.block.Block
 
 class Chunk(val x: Int, val z: Int, val height: Int = 256) {
 
-    val blocks = Array(height) { Array(16 * 16) { Block.AIR } }
+    val blocks = Array(16 * 16 * height) { Block.AIR }
     val code = code(x, z)
 
     fun getBlockAt(x: Int, y: Int, z: Int): Block {
-        return blocks[y][z shl 4 or x]
+        return blocks[y * 256 + (x shl 4 or z)]
     }
 
     fun setBlockAt(x: Int, y: Int, z: Int, block: Block) {
-        blocks[y][z shl 4 or x] = block
+        blocks[y * 256 + (x shl 4 or z)] = block
     }
 
     companion object {

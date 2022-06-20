@@ -69,8 +69,6 @@ class AdaptProtocol : MinecraftProtocol {
         this.handler = handler
     }
 
-    private var time = 0L
-
     override fun connect(host: String, port: Int, proxy: Proxy) {
         if (!this::handler.isInitialized) {
             throw IllegalStateException("handler is not initialized, please call setHandler first")
@@ -85,10 +83,7 @@ class AdaptProtocol : MinecraftProtocol {
                 val myEvent = PacketReceiveEvent(event.getPacket())
                 handler.bot.emit(myEvent)
                 if (!myEvent.isCancelled) {
-                    val s = System.nanoTime()
                     handlePacketIn(myEvent.packet)
-                    time += System.nanoTime() - s
-                    println(time / 1000000)
                 }
             }
 
@@ -554,7 +549,7 @@ class AdaptProtocol : MinecraftProtocol {
         }
     }
 
-    private val airState = BlockState(0, 0)
+    private val airState = BlockState(0, 10)
 
     private fun handleChunk(column: Column) {
         val chunk = Chunk(column.x, column.z)
@@ -566,19 +561,15 @@ class AdaptProtocol : MinecraftProtocol {
             val states = c.blocks.states
             val stateMode = c.blocks.bitsPerEntry <= 8
             for(y in 0 until 16) {
-                i = 0
-                for (z in 0 until 16) {
-                    for (x in 0 until 16) {
-                        val id = storage.get(y shl 8 or i)
-                        val state = if (stateMode) {
-                            if(id in 0 until states.size) states.get(id) else airState
-                        } else {
-                            BlockState(id shr 4, id and 0xf)
-                        }
-
-                        chunk.blocks[yPos][i] = Block(state.id, state.data, CommonConverter.blockType(state.id))
-                        i++
+                for (i in 0 until 256) {
+                    val id = storage.get(y shl 8 or i)
+                    val state = if (stateMode) {
+                        if(id in 0 until states.size) states[id] else airState
+                    } else {
+                        BlockState(id shr 4, id and 0xf)
                     }
+
+                    chunk.blocks[yPos * 256 + i] = Block(state.id, state.data, CommonConverter.blockType(state.id))
                 }
                 yPos++
             }
