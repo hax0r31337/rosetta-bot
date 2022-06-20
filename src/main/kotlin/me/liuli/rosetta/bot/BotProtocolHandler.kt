@@ -206,6 +206,6 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun onBlockUpdate(x: Int, y: Int, z: Int, block: Block) {
-
+        bot.world.setBlockAt(x, y, z, block)
     }
 }

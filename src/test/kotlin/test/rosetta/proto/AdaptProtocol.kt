@@ -69,6 +69,8 @@ class AdaptProtocol : MinecraftProtocol {
         this.handler = handler
     }
 
+    private var time = 0L
+
     override fun connect(host: String, port: Int, proxy: Proxy) {
         if (!this::handler.isInitialized) {
             throw IllegalStateException("handler is not initialized, please call setHandler first")
@@ -83,12 +85,18 @@ class AdaptProtocol : MinecraftProtocol {
                 val myEvent = PacketReceiveEvent(event.getPacket())
                 handler.bot.emit(myEvent)
                 if (!myEvent.isCancelled) {
+                    val s = System.nanoTime()
                     handlePacketIn(myEvent.packet)
+                    time += System.nanoTime() - s
+                    println(time / 1000000)
                 }
             }
 
             override fun disconnected(event: DisconnectedEvent) {
                 handler.onDisconnect(event.reason)
+                if (event.cause != null) {
+                    event.cause.printStackTrace()
+                }
             }
         })
 
@@ -512,9 +520,9 @@ class AdaptProtocol : MinecraftProtocol {
                 entity.displayName = it.value.toString()
             }
             if (entity is EntityLiving) {
-                if (it.id == 11) { // absorption
+                if (it.id == 11 && it.value is Float) { // absorption
                     handler.onHealthChange(entityId, handler.bot.player.health, handler.bot.player.maxHealth, it.value as Float)
-                } else if (it.id == 7) { // health
+                } else if (it.id == 7 && it.value is Float) { // health
                     handler.onHealthChange(entityId, it.value as Float, handler.bot.player.maxHealth, handler.bot.player.absorption)
                 } else if (it.id == 0) { // TODO pose
                 }
@@ -546,18 +554,29 @@ class AdaptProtocol : MinecraftProtocol {
         }
     }
 
+    private val airState = BlockState(0, 0)
+
     private fun handleChunk(column: Column) {
         val chunk = Chunk(column.x, column.z)
         var yPos = 0
         var i: Int
         column.chunks.forEach { c ->
             c ?: return@forEach
+            val storage = c.blocks.storage
+            val states = c.blocks.states
+            val stateMode = c.blocks.bitsPerEntry <= 8
             for(y in 0 until 16) {
                 i = 0
                 for (z in 0 until 16) {
                     for (x in 0 until 16) {
-                        val bl = c.blocks.get(x, y, z)
-                        chunk.blocks[yPos][i] = Block(bl.id, bl.data, CommonConverter.blockType(bl.id))
+                        val id = storage.get(y shl 8 or i)
+                        val state = if (stateMode) {
+                            if(id in 0 until states.size) states.get(id) else airState
+                        } else {
+                            BlockState(id shr 4, id and 0xf)
+                        }
+
+                        chunk.blocks[yPos][i] = Block(state.id, state.data, CommonConverter.blockType(state.id))
                         i++
                     }
                 }
@@ -567,8 +586,8 @@ class AdaptProtocol : MinecraftProtocol {
         handler.onChunk(chunk)
     }
 
-    private fun handleBlockChange(bl: BlockState, x: Int, y: Int, z: Int) {
-        val block = Block(bl.id, bl.data, CommonConverter.blockType(bl.id))
+    private fun handleBlockChange(state: BlockState, x: Int, y: Int, z: Int) {
+        val block = Block(state.id, state.data, CommonConverter.blockType(state.id))
         handler.onBlockUpdate(x, y, z, block)
     }
 }

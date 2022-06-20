@@ -13,4 +13,8 @@ data class Block(val id: Int, val data: Int, val type: Type) {
         FLUID,
         PASSABLE,
     }
+
+    companion object {
+        val AIR = Block(0, 0, Type.AIR)
+    }
 }
