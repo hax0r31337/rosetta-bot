@@ -10,7 +10,11 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         // initialize minecraft data
-        BlockConverter
+        kotlin.run {
+            val time = System.currentTimeMillis()
+            BlockConverter
+            println("init minecraft data cost: ${System.currentTimeMillis() - time}ms")
+        }
 
         joinServer()
     }

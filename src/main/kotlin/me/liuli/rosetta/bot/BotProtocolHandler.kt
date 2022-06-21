@@ -225,4 +225,26 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     fun onHeldItemChange(heldItem: Int) {
         bot.player.heldItemSlot = heldItem
     }
+
+    fun onPlayerDeath(entityId: Int, cause: String) {
+        if (entityId == bot.player.id) {
+            bot.emit(DeathEvent(cause))
+            bot.player.isAlive = false
+        }
+    }
+
+    fun onWorldBorderChangeCenter(x: Double, z: Double, size: Int) {
+        bot.world.border.centerX = x
+        bot.world.border.centerZ = z
+        bot.world.border.worldSize = size
+    }
+
+    fun onWorldBorderChangeSize(startDiameter: Double, endDiameter: Double, time: Long) {
+        bot.world.border.setTransition(startDiameter, endDiameter, time)
+    }
+
+    fun onWorldBorderChangeWarning(warningDistance: Int, warningTime: Int) {
+        bot.world.border.warningDistance = warningDistance
+        bot.world.border.warningTime = warningTime
+    }
 }

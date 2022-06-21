@@ -16,7 +16,7 @@ import test.rosetta.loadJsonFromWeb
 object BlockConverter {
 
     val collisionJson: JsonObject
-    val blocksJson = mutableMapOf<Int, JsonObject>()
+    val blocksInfo = mutableMapOf<Int, BlockInfo>()
 
     private val shapes = mutableMapOf<Int, AxisAlignedBB?>()
     private val blockCache = mutableMapOf<Int, Block>()
@@ -37,9 +37,22 @@ object BlockConverter {
 
         val blocks = loadJsonFromWeb("https://raw.githubusercontent.com/PrismarineJS/minecraft-data/master/data/pc/1.12/blocks.json", "blocks.json").asJsonArray
         blocks.forEach {
-            it.asJsonObject.also {
-                blocksJson[it.get("id").asInt] = it
-            }
+            val data = it.asJsonObject
+            // rewrite json to object for reduce memory usage
+            blocksInfo[data.get("id").asInt] = BlockInfo(
+                data.get("name").asString,
+                if(data.has("material")) {
+                    val matName = data.get("material").asString
+                    Block.Material.values().firstOrNull { it.name.equals(matName, true) } ?: Block.Material.OTHER
+                } else {
+                    Block.Material.OTHER
+                },
+                if(data.has("hardness") && data.get("hardness") !is JsonNull) data.get("hardness").asFloat else 0f,
+                data.get("diggable").asBoolean,
+                if(data.has("harvestTools")) {
+                    data.getAsJsonObject("harvestTools").keySet().map { it.toInt() }.toTypedArray()
+                } else null
+            )
         }
 
     }
@@ -60,35 +73,28 @@ object BlockConverter {
         if(blockCache.containsKey(newId)) {
             return blockCache[newId]!!
         }
-        val data = blocksJson[block.id] ?: blocksJson[0]!!.also {
+        val data = blocksInfo[block.id] ?: blocksInfo[0]!!.also {
             println("unknown block: $block")
         }
-        val harvest = if(data.has("harvestTools")) {
-            data.getAsJsonObject("harvestTools").keySet().map { it.toInt() }.toTypedArray()
-        } else null
         val mat = if (block.id == 0) {
             Block.Material.AIR
-        } else if(data.has("material")) {
-            val matName = data.get("material").asString
-            Block.Material.values().firstOrNull { it.name.equals(matName, true) } ?: Block.Material.OTHER
         } else {
-            Block.Material.OTHER
+            data.material
         }
-        val bbData = collisionJson.get(data.get("name").asString)
 
-        val bb = if(bbData == null) {
-            null
-        } else if(bbData.isJsonArray) {
-            bbData.asJsonArray.get(block.data)?.asInt?.let {
-                shapes[it]
+        val bb = collisionJson.get(data.name)?.let { bbData ->
+            if(bbData.isJsonArray) {
+                bbData.asJsonArray.get(block.data)?.asInt?.let {
+                    shapes[it]
+                }
+            } else {
+                shapes[bbData.asInt]
             }
-        } else {
-            shapes[bbData.asInt]
         }
-        val blockResult = Block(newId, mat,
-            if(data.has("hardness") && data.get("hardness") !is JsonNull) data.get("hardness").asFloat else 0f,
-            data.get("diggable").asBoolean, harvest, bb)
+        val blockResult = Block(newId, mat, data.name, data.hardness, data.diggable, data.harvest, bb)
         blockCache[newId] = blockResult
         return blockResult
     }
+
+    class BlockInfo(val name: String, val material: Block.Material, val hardness: Float, val diggable: Boolean, val harvest: Array<Int>?)
 }

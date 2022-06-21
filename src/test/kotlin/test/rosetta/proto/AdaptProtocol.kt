@@ -123,6 +123,7 @@ class AdaptProtocol : MinecraftProtocol {
     private var positionUpdateTicks = 0
     private var lastSprint = false
     private var lastSneak = false
+    private var lastOnGround = false
 
     override fun move(x: Double, y: Double, z: Double, yawIn: Float, pitchIn: Float, onGround: Boolean, sprinting: Boolean, sneaking: Boolean) {
         if(sprinting != lastSprint) {
@@ -171,8 +172,8 @@ class AdaptProtocol : MinecraftProtocol {
             client.session.send(ClientPlayerPositionPacket(onGround, x, y, z))
         } else if (rotated) {
             client.session.send(ClientPlayerRotationPacket(onGround, yaw, pitch))
-        } else {
-//            client.session.send(ClientPlayerMovementPacket(onGround))
+        } else if (lastOnGround != onGround) {
+            client.session.send(ClientPlayerMovementPacket(onGround))
         }
 
         this.positionUpdateTicks++
@@ -187,6 +188,7 @@ class AdaptProtocol : MinecraftProtocol {
             this.lastYaw = yaw
             this.lastPitch = pitch
         }
+        this.lastOnGround = onGround
     }
 
     override fun heldItemChange(slot: Int) {

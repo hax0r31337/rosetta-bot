@@ -6,6 +6,7 @@ import com.github.steveice10.mc.protocol.data.game.entity.attribute.Attribute
 import com.github.steveice10.mc.protocol.data.game.entity.attribute.AttributeType
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata
 import com.github.steveice10.mc.protocol.data.game.entity.player.Animation
+import com.github.steveice10.mc.protocol.data.game.entity.player.CombatState
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode
 import com.github.steveice10.mc.protocol.data.game.entity.player.Hand
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ObjectiveAction
@@ -14,6 +15,7 @@ import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardPosition
 import com.github.steveice10.mc.protocol.data.game.scoreboard.TeamAction
 import com.github.steveice10.mc.protocol.data.game.setting.ChatVisibility
 import com.github.steveice10.mc.protocol.data.game.setting.SkinPart
+import com.github.steveice10.mc.protocol.data.game.world.WorldBorderAction
 import com.github.steveice10.mc.protocol.data.game.world.block.BlockState
 import com.github.steveice10.mc.protocol.data.game.world.notify.ClientNotification
 import com.github.steveice10.mc.protocol.data.game.world.notify.RainStrengthValue
@@ -225,14 +227,29 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
             is ServerEntityEffectPacket -> {
                 handler.addEffect(pk.entityId, PotionEffect(CommonConverter.effect(pk.effect), pk.amplifier, pk.duration))
             }
-//            is ServerCombatPacket
+            is ServerCombatPacket -> {
+                if (pk.combatState == CombatState.ENTITY_DEAD) {
+                    handler.onPlayerDeath(pk.entityId, pk.message.fullText)
+                }
+            }
             is ServerDifficultyPacket -> {
                 handler.onDifficultyChange(CommonConverter.difficulty(pk.difficulty))
             }
-//            is ServerSwitchCameraPacket -> {
-//
-//            }
-//            is ServerWorldBorderPacket
+//            is ServerSwitchCameraPacket
+            is ServerWorldBorderPacket -> {
+                when(pk.action) {
+                    WorldBorderAction.SET_SIZE -> handler.onWorldBorderChangeSize(pk.radius, pk.radius, 0)
+                    WorldBorderAction.LERP_SIZE -> handler.onWorldBorderChangeSize(pk.oldRadius, pk.newRadius, pk.speed)
+                    WorldBorderAction.SET_CENTER -> handler.onWorldBorderChangeCenter(pk.centerX, pk.centerY, handler.bot.world.border.worldSize)
+                    WorldBorderAction.SET_WARNING_TIME -> handler.onWorldBorderChangeWarning(handler.bot.world.border.warningDistance, pk.warningTime)
+                    WorldBorderAction.SET_WARNING_BLOCKS -> handler.onWorldBorderChangeWarning(pk.warningBlocks, handler.bot.world.border.warningTime)
+                    WorldBorderAction.INITIALIZE -> {
+                        handler.onWorldBorderChangeCenter(pk.centerX, pk.centerY, pk.portalTeleportBoundary)
+                        handler.onWorldBorderChangeSize(pk.oldRadius, pk.newRadius, pk.speed)
+                        handler.onWorldBorderChangeWarning(pk.warningBlocks, pk.warningTime)
+                    }
+                }
+            }
             is ServerTitlePacket -> {
                 when(pk.action) {
                     TitleAction.TITLE -> handler.onTitle(EnumTitleType.TITLE, pk.title?.fullText ?: "", this.titleFadeIn, this.titleStay, this.titleFadeOut)

@@ -15,6 +15,7 @@ class World {
     val bossBar = mutableMapOf<UUID, BossBar>()
 
     var dimension = 0
+    val border = WorldBorder()
 
     // scoreboard
     val scoreboard = mutableMapOf<String, Scoreboard>()

@@ -2,7 +2,7 @@ package me.liuli.rosetta.world.block
 
 import com.google.gson.JsonObject
 
-data class Block(val id: Int, val material: Material,
+data class Block(val id: Int, val material: Material, val name: String,
                  val hardness: Float = 0f, val diggable: Boolean = true, val harvertLimit: Array<Int>? = null,
                  val boundingBox: AxisAlignedBB? = AxisAlignedBB.SHAPE_BLOCK) {
 
@@ -21,6 +21,6 @@ data class Block(val id: Int, val material: Material,
     }
 
     companion object {
-        val AIR = Block(0, Material.AIR, boundingBox = null)
+        val AIR = Block(0, Material.AIR, "air", boundingBox = null)
     }
 }

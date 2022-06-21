@@ -37,4 +37,4 @@ class TitleEvent(val type: EnumTitleType, val message: String, val fadeIn: Int, 
 /**
  * called when player death
  */
-class DeathEvent : Event()
+class DeathEvent(val cause: String = "unknown") : Event()
