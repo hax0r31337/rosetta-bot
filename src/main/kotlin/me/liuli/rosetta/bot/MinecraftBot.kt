@@ -1,5 +1,6 @@
 package me.liuli.rosetta.bot
 
+import me.liuli.rosetta.bot.event.DeathEvent
 import me.liuli.rosetta.bot.event.Event
 import me.liuli.rosetta.bot.event.Listener
 import me.liuli.rosetta.bot.event.TickEvent
@@ -38,9 +39,6 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
         thread {
             connect(host, port, proxy)
         }
-        while(!isConnected) {
-            Thread.sleep(10)
-        }
     }
 
     fun startTick() {
@@ -56,8 +54,18 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
     fun tick() {
         emit(TickEvent())
         world.tick()
-        protocol.move(player.position.x, player.position.y, player.position.z,
-            player.rotation.x, player.rotation.y, player.onGround, player.sprinting, player.sneaking)
+
+        // update player
+        if (player.health <= 0 && player.isAlive) {
+            player.isAlive = false
+            emit(DeathEvent())
+        } else if (player.health > 0 && !player.isAlive) {
+            player.isAlive = true
+        }
+        if (player.isAlive) {
+            protocol.move(player.position.x, player.position.y, player.position.z,
+                player.rotation.x, player.rotation.y, player.onGround, player.sprinting, player.sneaking)
+        }
     }
 
     fun disconnect() {

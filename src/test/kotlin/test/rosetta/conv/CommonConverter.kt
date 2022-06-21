@@ -4,8 +4,10 @@ import com.github.steveice10.mc.protocol.data.game.BossBarColor
 import com.github.steveice10.mc.protocol.data.game.entity.Effect
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode
 import com.github.steveice10.mc.protocol.data.game.setting.Difficulty
+import com.github.steveice10.mc.protocol.data.game.world.block.BlockFace
 import com.github.steveice10.packetlib.ProxyInfo
 import me.liuli.rosetta.world.block.Block
+import me.liuli.rosetta.world.data.EnumBlockFacing
 import me.liuli.rosetta.world.data.EnumDifficulty
 import me.liuli.rosetta.world.data.EnumGameMode
 import java.awt.Color
@@ -60,6 +62,17 @@ object CommonConverter {
             Block.Type.AIR
         } else {
             Block.Type.SOLID
+        }
+    }
+
+    fun enumBlockFacing(facing: EnumBlockFacing): BlockFace {
+        return when(facing) {
+            EnumBlockFacing.NORTH -> BlockFace.NORTH
+            EnumBlockFacing.EAST -> BlockFace.EAST
+            EnumBlockFacing.SOUTH -> BlockFace.SOUTH
+            EnumBlockFacing.WEST -> BlockFace.WEST
+            EnumBlockFacing.UP -> BlockFace.UP
+            EnumBlockFacing.DOWN -> BlockFace.DOWN
         }
     }
 }

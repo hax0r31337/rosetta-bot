@@ -6,6 +6,7 @@ import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.*
+import java.awt.Dimension
 import java.util.*
 
 class BotProtocolHandler(val bot: MinecraftBot) {
@@ -23,9 +24,10 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         bot.emit(DisconnectEvent(reason, isClient))
     }
 
-    fun onJoinGame(entityId: Int) {
+    fun onJoinGame(entityId: Int, dimension: Int) {
         bot.player.id = entityId
         bot.world.entities[entityId] = bot.player
+        bot.world.dimension = dimension
     }
 
     fun onGamemodeChange(gamemode: EnumGameMode) {
@@ -207,5 +209,16 @@ class BotProtocolHandler(val bot: MinecraftBot) {
 
     fun onBlockUpdate(x: Int, y: Int, z: Int, block: Block) {
         bot.world.setBlockAt(x, y, z, block)
+    }
+
+    fun onSwing(entityId: Int) {
+//        val entity = bot.world.entities[entityId] as? Entity
+    }
+
+    fun onRespawn(dimension: Int, clearChunk: Boolean) {
+        bot.world.dimension = dimension
+        if (clearChunk) {
+            bot.world.chunk.clear()
+        }
     }
 }

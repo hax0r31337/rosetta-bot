@@ -7,8 +7,8 @@ import com.github.steveice10.mc.protocol.data.game.chunk.Column
 import com.github.steveice10.mc.protocol.data.game.entity.attribute.Attribute
 import com.github.steveice10.mc.protocol.data.game.entity.attribute.AttributeType
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata
-import com.github.steveice10.mc.protocol.data.game.entity.player.Hand
-import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerState
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position
+import com.github.steveice10.mc.protocol.data.game.entity.player.*
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ObjectiveAction
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardAction
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardPosition
@@ -22,6 +22,7 @@ import com.github.steveice10.mc.protocol.data.game.world.notify.ThunderStrengthV
 import com.github.steveice10.mc.protocol.packet.MinecraftPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientPluginMessagePacket
+import com.github.steveice10.mc.protocol.packet.ingame.client.ClientRequestPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientResourcePackStatusPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.*
@@ -65,6 +66,8 @@ class AdaptProtocol : MinecraftProtocol {
     private lateinit var handler: BotProtocolHandler
     private lateinit var client: Client
 
+    lateinit var packetProcessor: PacketProcess
+
     override fun setHandler(handler: BotProtocolHandler) {
         this.handler = handler
     }
@@ -78,12 +81,14 @@ class AdaptProtocol : MinecraftProtocol {
         this.client = Client(host, port, proto, TcpSessionFactory(CommonConverter.proxy(proxy)))
         client.session.setFlag(MinecraftConstants.AUTH_PROXY_KEY, proxy)
 
+        packetProcessor = PacketProcess(handler, client)
+
         client.session.addListener(object : SessionAdapter() {
             override fun packetReceived(event: PacketReceivedEvent) {
                 val myEvent = PacketReceiveEvent(event.getPacket())
                 handler.bot.emit(myEvent)
                 if (!myEvent.isCancelled) {
-                    handlePacketIn(myEvent.packet)
+                    packetProcessor.handlePacketIn(myEvent.packet)
                 }
             }
 
@@ -105,6 +110,10 @@ class AdaptProtocol : MinecraftProtocol {
         }
     }
 
+    override fun swingItem() {
+        client.session.send(ClientPlayerSwingArmPacket(Hand.MAIN_HAND))
+    }
+
     // movement
     private var lastX = 0.0
     private var lastY = 0.0
@@ -114,11 +123,6 @@ class AdaptProtocol : MinecraftProtocol {
     private var positionUpdateTicks = 0
     private var lastSprint = false
     private var lastSneak = false
-
-    // title
-    private var titleFadeIn = 10
-    private var titleStay = 70
-    private var titleFadeOut = 20
 
     override fun move(x: Double, y: Double, z: Double, yawIn: Float, pitchIn: Float, onGround: Boolean, sprinting: Boolean, sneaking: Boolean) {
         if(sprinting != lastSprint) {
@@ -185,400 +189,47 @@ class AdaptProtocol : MinecraftProtocol {
         }
     }
 
+    override fun heldItemChange(slot: Int) {
+        client.session.send(ClientPlayerChangeHeldItemPacket(slot))
+    }
+
+    override fun abilities(invincible: Boolean, flying: Boolean, allowFlying: Boolean, walkSpeed: Float, flySpeed: Float) {
+        client.session.send(ClientPlayerAbilitiesPacket(invincible, allowFlying, flying,
+            handler.bot.world.gamemode == EnumGameMode.CREATIVE, walkSpeed, flySpeed))
+    }
+
+    override fun dig(x: Int, y: Int, z: Int, facing: EnumBlockFacing, mode: Int) {
+        client.session.send(ClientPlayerActionPacket(when(mode) {
+            0 -> PlayerAction.START_DIGGING
+            1 -> PlayerAction.CANCEL_DIGGING
+            2 -> PlayerAction.FINISH_DIGGING
+            else -> throw IllegalArgumentException("invalid mode: $mode")
+        }, Position(x, y, z), CommonConverter.enumBlockFacing(facing)))
+    }
+
+    override fun useItem() {
+        client.session.send(ClientPlayerUseItemPacket(Hand.MAIN_HAND))
+    }
+
+    override fun useItem(x: Int, y: Int, z: Int, facing: EnumBlockFacing) {
+        client.session.send(ClientPlayerPlaceBlockPacket(Position(x, y, z), CommonConverter.enumBlockFacing(facing), Hand.MAIN_HAND,
+            0f, 0f, 0f)) // TODO: calculate cursor position
+    }
+
+    override fun useItem(entityId: Int, mode: Int) {
+        client.session.send(ClientPlayerInteractEntityPacket(entityId, when(mode) {
+            0 -> InteractAction.ATTACK
+            1 -> InteractAction.INTERACT
+            2 -> InteractAction.INTERACT_AT
+            else -> throw IllegalArgumentException("invalid mode: $mode")
+        }))
+    }
+
+    override fun respawn() {
+        client.session.send(ClientRequestPacket(ClientRequest.RESPAWN))
+    }
+
     override fun chat(message: String) {
         client.session.send(ClientChatPacket(message))
-    }
-
-    fun handlePacketIn(pk: MinecraftPacket) {
-        when(pk) {
-            is ServerJoinGamePacket -> {
-                handler.onJoinGame(pk.entityId)
-                handler.onGamemodeChange(CommonConverter.gamemode(pk.gameMode))
-                handler.onDifficultyChange(CommonConverter.difficulty(pk.difficulty))
-                client.session.send(ClientSettingsPacket("en_US", 8, ChatVisibility.FULL, true, SkinPart.values(), Hand.MAIN_HAND))
-                client.session.send(ClientPluginMessagePacket("MC|Brand", "vanilla".toByteArray()))
-                handler.onConnected()
-            }
-            is ServerSpawnObjectPacket -> {
-                val entity = Entity()
-                entity.id = pk.entityId
-                entity.position.set(pk.x, pk.y, pk.z)
-                entity.rotation.set(pk.yaw, pk.pitch)
-                handler.spawnEntity(entity)
-            }
-            is ServerSpawnGlobalEntityPacket -> {
-                val entity = Entity()
-                entity.id = pk.entityId
-                entity.position.set(pk.x, pk.y, pk.z)
-                handler.spawnEntity(entity)
-            }
-            is ServerEntityVelocityPacket -> {
-                handler.onSetMotion(pk.entityId, pk.motionX.toFloat(), pk.motionY.toFloat(), pk.motionZ.toFloat())
-            }
-            is ServerEntityMetadataPacket -> {
-                handleMetadata(pk.entityId, pk.metadata)
-            }
-            is ServerSpawnPlayerPacket -> {
-                val player = EntityPlayer()
-                player.id = pk.entityId
-                player.uuid = pk.uuid
-                player.position.set(pk.x, pk.y, pk.z)
-                player.rotation.set(pk.yaw, pk.pitch)
-                handler.spawnEntity(player)
-                handleMetadata(pk.entityId, pk.metadata)
-            }
-            is ServerEntityTeleportPacket -> {
-                handler.onTeleport(pk.entityId, pk.x, pk.y, pk.z, pk.yaw, pk.pitch, pk.isOnGround)
-            }
-//            is ServerPlayerChangeHeldItemPacket
-            is ServerEntityMovementPacket -> {
-                val entity = handler.bot.world.entities[pk.entityId] ?: return
-                val pos = entity.position
-                if (pk is ServerEntityPositionPacket) {
-                    handler.onMovement(pk.entityId, pk.isOnGround, pos.x + pk.movementX, pos.y + pk.movementY, pos.z + pk.movementZ)
-                } else if (pk is ServerEntityPositionRotationPacket) {
-                    handler.onMovement(pk.entityId, pk.isOnGround, pos.x + pk.movementX, pos.y + pk.movementY, pos.z + pk.movementZ, pk.yaw, pk.pitch)
-                } else if (pk is ServerEntityRotationPacket) {
-                    handler.onMovement(pk.entityId, pk.isOnGround, pk.yaw, pk.pitch)
-                } else {
-                    handler.onMovement(pk.entityId, pk.isOnGround)
-                }
-            }
-            is ServerEntityDestroyPacket -> {
-                pk.entityIds.forEach { handler.onRemoveEntity(it) }
-            }
-            is ServerPlayerPositionRotationPacket -> {
-                if(handler.onPlayerTeleport(pk.x, pk.y, pk.z, pk.yaw, pk.pitch)) {
-                    client.session.send(ClientTeleportConfirmPacket(pk.teleportId))
-                    client.session.send(ClientPlayerPositionRotationPacket(false, pk.x, pk.y, pk.z, pk.yaw, pk.pitch))
-                }
-            }
-            is ServerMultiBlockChangePacket -> {
-                pk.records.forEach {
-                    handleBlockChange(it.block, it.position.x, it.position.y, it.position.z)
-                }
-            }
-            is ServerChunkDataPacket -> {
-                handleChunk(pk.column)
-            }
-            is ServerUnloadChunkPacket -> {
-                handler.unloadChunk(pk.x, pk.z)
-            }
-            is ServerBlockChangePacket -> {
-                handleBlockChange(pk.record.block, pk.record.position.x, pk.record.position.y, pk.record.position.z)
-            }
-//            is ServerEntityCollectItemPacket
-            is ServerChatPacket -> {
-                if (pk.type == MessageType.NOTIFICATION) {
-                    handler.onTitle(EnumTitleType.ACTIONBAR, pk.message.fullText, this.titleFadeIn, this.titleStay, this.titleFadeOut)
-                } else {
-                    handler.onChat(pk.message.fullText, pk.message.toJsonString())
-                }
-            }
-//            is ServerEntityAnimationPacket
-//            is ServerPlayerUseBedPacket
-            is ServerSpawnMobPacket -> {
-                val entity = EntityLiving()
-                entity.id = pk.entityId
-                entity.position.set(pk.x, pk.y, pk.z)
-                entity.rotation.set(pk.yaw, pk.pitch)
-                handler.spawnEntity(entity)
-                handleMetadata(pk.entityId, pk.metadata)
-            }
-            is ServerUpdateTimePacket -> {
-                handler.onTimeUpdate(pk.time)
-            }
-            is ServerSpawnPositionPacket -> {
-                handler.onSpawnPositionChange(pk.position.x, pk.position.y, pk.position.z)
-            }
-//            is ServerEntitySetPassengersPacket
-//            is ServerEntityAttachPacket
-//            is ServerEntityStatusPacket
-            is ServerPlayerHealthPacket -> {
-                handler.onHealthChange(handler.bot.player.id, pk.health, handler.bot.player.maxHealth, handler.bot.player.absorption)
-                handler.onFoodChange(pk.food.toFloat(), pk.saturation)
-            }
-            is ServerPlayerSetExperiencePacket -> {
-                handler.onExperienceChange(pk.slot, pk.level)
-            }
-//            is ServerRespawnPacket
-            is ServerExplosionPacket -> {
-                if (pk.x == 0f && pk.y == 0f && pk.z == 0f) {
-                    return
-                }
-                val entity = handler.bot.player
-                handler.onSetMotion(entity.id, entity.motion.x, entity.motion.y, entity.motion.z)
-            }
-//            is ServerOpenWindowPacket
-//            is ServerSetSlotPacket
-            is ServerConfirmTransactionPacket -> {
-                if (!pk.accepted) {
-                    client.session.send(ClientConfirmTransactionPacket(pk.windowId, pk.actionId, true))
-                }
-            }
-//            is ServerWindowItemsPacket
-//            is ServerOpenTileEntityEditorPacket
-//            is ServerUpdateTileEntityPacket
-//            is ServerWindowPropertyPacket
-//            is ServerEntityEquipmentPacket
-//            is ServerCloseWindowPacket
-//            is ServerBlockValuePacket
-//            is ServerBlockBreakAnimPacket
-            is ServerNotifyClientPacket -> {
-                if(pk.notification == ClientNotification.RAIN_STRENGTH) {
-                    handler.onWeatherUpdate((pk.value as RainStrengthValue).strength, handler.bot.world.thunderStrength)
-                } else if (pk.notification == ClientNotification.THUNDER_STRENGTH) {
-                    handler.onWeatherUpdate(handler.bot.world.rainStrength, (pk.value as ThunderStrengthValue).strength)
-                }
-            }
-//            is ServerMapDataPacket
-//            is ServerPlayEffectPacket
-//            is ServerAdvancementsPacket
-//            is ServerAdvancementTabPacket
-//            is ServerStatisticsPacket
-//            is ServerUnlockRecipesPacket
-            is ServerEntityEffectPacket -> {
-                handler.addEffect(pk.entityId, PotionEffect(CommonConverter.effect(pk.effect), pk.amplifier, pk.duration))
-            }
-//            is ServerCombatPacket
-            is ServerDifficultyPacket -> {
-                handler.onDifficultyChange(CommonConverter.difficulty(pk.difficulty))
-            }
-//            is ServerSwitchCameraPacket -> {
-//
-//            }
-//            is ServerWorldBorderPacket
-            is ServerTitlePacket -> {
-                when(pk.action) {
-                    TitleAction.TITLE -> handler.onTitle(EnumTitleType.TITLE, pk.title?.fullText ?: "", this.titleFadeIn, this.titleStay, this.titleFadeOut)
-                    TitleAction.SUBTITLE -> handler.onTitle(EnumTitleType.SUBTITLE, pk.subtitle?.fullText ?: "", this.titleFadeIn, this.titleStay, this.titleFadeOut)
-                    TitleAction.ACTION_BAR -> handler.onTitle(EnumTitleType.ACTIONBAR, pk.actionBar?.fullText ?: "", this.titleFadeIn, this.titleStay, this.titleFadeOut)
-                    TitleAction.RESET -> {
-                        handler.onTitle(EnumTitleType.TITLE, "", -1, -1, -1)
-                        handler.onTitle(EnumTitleType.SUBTITLE, "", -1, -1, -1)
-                        this.titleFadeIn = 10
-                        this.titleStay = 70
-                        this.titleFadeOut = 20
-                    }
-                    TitleAction.CLEAR -> {
-                        handler.onTitle(EnumTitleType.TITLE, "", -1, -1, -1)
-                        handler.onTitle(EnumTitleType.SUBTITLE, "", -1, -1, -1)
-                    }
-                    TitleAction.TIMES -> {
-                        this.titleFadeIn = pk.fadeIn
-                        this.titleStay = pk.stay
-                        this.titleFadeOut = pk.fadeOut
-                    }
-                }
-            }
-            is ServerPlayerListDataPacket -> {
-                handler.onPlayerListInfoUpdate(pk.header.fullText, pk.footer.fullText)
-            }
-            is ServerEntityRemoveEffectPacket -> {
-                handler.removeEffect(pk.entityId, CommonConverter.effect(pk.effect))
-            }
-            is ServerPlayerListEntryPacket -> {
-                handlePlayerList(pk.action, pk.entries)
-            }
-            is ServerPlayerAbilitiesPacket -> {
-                handler.onAbilitiesChange(pk.flying, pk.canFly, pk.invincible)
-                handler.onMoveSpeedChange(pk.walkSpeed, pk.flySpeed)
-            }
-//            is ServerTabCompletePacket
-//            is ServerPlaySoundPacket
-//            is ServerPlayBuiltinSoundPacket
-            is ServerResourcePackSendPacket -> {
-                client.session.send(ClientResourcePackStatusPacket(ResourcePackStatus.FAILED_DOWNLOAD))
-            }
-            is ServerBossBarPacket -> {
-                var bar = handler.bot.world.bossBar[pk.uuid]
-                when(pk.action) {
-                    BossBarAction.ADD -> {
-                        bar = BossBar(pk.uuid, pk.title.fullText, CommonConverter.bossBarColor(pk.color), pk.health)
-                    }
-                    BossBarAction.UPDATE_HEALTH -> {
-                        bar ?: return
-                        bar.health = pk.health
-                    }
-                    BossBarAction.UPDATE_STYLE -> {
-                        bar ?: return
-                        bar.color = CommonConverter.bossBarColor(pk.color)
-                    }
-                    BossBarAction.UPDATE_TITLE -> {
-                        bar ?: return
-                        bar.title = pk.title.fullText
-                    }
-                    BossBarAction.REMOVE -> {
-                        handler.removeBossBar(pk.uuid)
-                        return
-                    }
-                }
-                handler.setBossBar(bar ?: return)
-            }
-//            is ServerVehicleMovePacket
-//            is ServerPluginMessagePacket
-            is ServerScoreboardObjectivePacket -> {
-                when(pk.action) {
-                    ObjectiveAction.ADD -> {
-                        val sb = Scoreboard(pk.name, pk.displayName, Scoreboard.Sort.DESCENDING)
-                        handler.setScoreboard(sb)
-                    }
-                    ObjectiveAction.REMOVE -> handler.removeScoreboard(pk.name)
-                    ObjectiveAction.UPDATE -> {
-                        val sb = handler.bot.world.scoreboard[pk.name] ?: return
-                        sb.displayName = pk.displayName
-                        handler.setScoreboard(sb)
-                    }
-                }
-            }
-            is ServerUpdateScorePacket -> {
-                val sb = handler.bot.world.scoreboard[pk.objective] ?: return
-                if (pk.action == ScoreboardAction.ADD_OR_UPDATE) {
-                    val score = sb.score[pk.entry] ?: Scoreboard.Score(pk.entry, pk.value).also { sb.score[pk.entry] = it }
-                    score.score = pk.value
-                } else {
-                    sb.score.remove(pk.entry)
-                }
-            }
-            is ServerDisplayScoreboardPacket -> {
-                if (pk.position == ScoreboardPosition.SIDEBAR) {
-                    handler.displayScoreboard(pk.scoreboardName)
-                }
-            }
-            is ServerTeamPacket -> {
-                val sb = handler.bot.world.displayScoreboard ?: return
-                if (pk.action == TeamAction.CREATE) {
-                    sb.teams[pk.teamName] = Scoreboard.Team(pk.teamName, pk.displayName, pk.prefix, pk.suffix, pk.players.toMutableList())
-                    return
-                } else if (pk.action == TeamAction.REMOVE) {
-                    sb.teams.remove(pk.teamName)
-                    return
-                }
-                var team = sb.teams[pk.teamName] ?: return
-                when(pk.action) {
-                    TeamAction.ADD_PLAYER -> pk.players.forEach { team.players.add(it) }
-                    TeamAction.REMOVE_PLAYER -> pk.players.forEach { team.players.remove(it) }
-                    TeamAction.UPDATE -> {
-                        team.displayName = pk.displayName
-                        team.prefix = pk.prefix
-                        team.suffix = pk.suffix
-                    }
-                }
-            }
-//            is ServerSpawnParticlePacket
-            is ServerEntityPropertiesPacket -> {
-                handleProperties(pk.entityId, pk.attributes)
-            }
-//            else -> println(pk)
-        }
-    }
-
-    private fun handlePlayerList(action: PlayerListEntryAction, list: Array<PlayerListEntry>) {
-        val result = mutableListOf<NetworkPlayerInfo>()
-        val remove = mutableListOf<NetworkPlayerInfo>()
-        list.forEach {
-            var entry = handler.bot.world.playerList[it.profile.id]
-            if (action == PlayerListEntryAction.ADD_PLAYER) {
-                entry = NetworkPlayerInfo(it.profile.id, it.profile.name, CommonConverter.gamemode(it.gameMode), it.ping, it.displayName?.fullText)
-            } else if (entry == null) {
-                return@forEach // equals to java continue
-            }
-            when(action) {
-                PlayerListEntryAction.UPDATE_GAMEMODE -> {
-                    entry.gamemode = CommonConverter.gamemode(it.gameMode)
-                }
-                PlayerListEntryAction.UPDATE_LATENCY -> {
-                    entry.latency = it.ping
-                }
-                PlayerListEntryAction.UPDATE_DISPLAY_NAME -> {
-                    entry.displayName = it.displayName?.fullText
-                }
-                PlayerListEntryAction.REMOVE_PLAYER -> {
-                    remove.add(entry)
-                    return@forEach
-                }
-            }
-            result.add(entry)
-        }
-        if (result.isNotEmpty()) {
-            handler.onPlayerListUpdate(result)
-        }
-        if (remove.isNotEmpty()) {
-            handler.onPlayerListRemove(remove)
-        }
-    }
-
-    private fun handleMetadata(entityId: Int, metadata: Array<EntityMetadata>) {
-        val entity = handler.bot.world.entities[entityId] ?: return
-        metadata.forEach {
-            if (it.id == 2) { // nametag
-                entity.displayName = it.value.toString()
-            }
-            if (entity is EntityLiving) {
-                if (it.id == 11 && it.value is Float) { // absorption
-                    handler.onHealthChange(entityId, handler.bot.player.health, handler.bot.player.maxHealth, it.value as Float)
-                } else if (it.id == 7 && it.value is Float) { // health
-                    handler.onHealthChange(entityId, it.value as Float, handler.bot.player.maxHealth, handler.bot.player.absorption)
-                } else if (it.id == 0) { // TODO pose
-                }
-            }
-        }
-    }
-
-    private fun handleProperties(entityId: Int, properties: List<Attribute>) {
-        properties.forEach {
-            // TODO modifier
-            when (it.type) {
-                AttributeType.GENERIC_FLYING_SPEED -> {
-                    if(entityId == handler.bot.player.id) {
-                        handler.onMoveSpeedChange(handler.bot.player.walkSpeed, it.value.toFloat())
-                    }
-                }
-                AttributeType.GENERIC_MOVEMENT_SPEED -> {
-                    if(entityId == handler.bot.player.id) {
-                        handler.onMoveSpeedChange(it.value.toFloat(), handler.bot.player.flySpeed)
-                    }
-                }
-                AttributeType.GENERIC_MAX_HEALTH -> {
-                    val entity = handler.bot.world.entities[entityId] ?: return
-                    if (entity is EntityLiving) {
-                        handler.onHealthChange(entityId, entity.health, it.value.toFloat(), entity.absorption)
-                    }
-                }
-            }
-        }
-    }
-
-    private val airState = BlockState(0, 10)
-
-    private fun handleChunk(column: Column) {
-        val chunk = Chunk(column.x, column.z)
-        var yPos = 0
-        var i: Int
-        column.chunks.forEach { c ->
-            c ?: return@forEach
-            val storage = c.blocks.storage
-            val states = c.blocks.states
-            val stateMode = c.blocks.bitsPerEntry <= 8
-            for(y in 0 until 16) {
-                for (i in 0 until 256) {
-                    val id = storage.get(y shl 8 or i)
-                    val state = if (stateMode) {
-                        if(id in 0 until states.size) states[id] else airState
-                    } else {
-                        BlockState(id shr 4, id and 0xf)
-                    }
-
-                    chunk.blocks[yPos * 256 + i] = Block(state.id, state.data, CommonConverter.blockType(state.id))
-                }
-                yPos++
-            }
-        }
-        handler.onChunk(chunk)
-    }
-
-    private fun handleBlockChange(state: BlockState, x: Int, y: Int, z: Int) {
-        val block = Block(state.id, state.data, CommonConverter.blockType(state.id))
-        handler.onBlockUpdate(x, y, z, block)
     }
 }

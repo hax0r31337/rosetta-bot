@@ -1,10 +1,7 @@
 package test.rosetta
 
 import me.liuli.rosetta.bot.MinecraftBot
-import me.liuli.rosetta.bot.event.ChatReceiveEvent
-import me.liuli.rosetta.bot.event.DisconnectEvent
-import me.liuli.rosetta.bot.event.ListenerSet
-import me.liuli.rosetta.bot.event.TickEvent
+import me.liuli.rosetta.bot.event.*
 
 class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
@@ -32,4 +29,9 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
 //    fun onPacketReceive(event: PacketReceiveEvent) {
 //        println(event.packet)
 //    }
+
+    @Listen
+    fun onDeath(event: DeathEvent) {
+        bot.protocol.respawn()
+    }
 }

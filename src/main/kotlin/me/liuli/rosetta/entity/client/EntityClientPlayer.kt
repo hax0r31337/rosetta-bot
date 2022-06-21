@@ -32,4 +32,6 @@ class EntityClientPlayer : EntityPlayer() {
     // TODO: inventory
 
     var isSpawned = false
+    var isAlive = true
+
 }

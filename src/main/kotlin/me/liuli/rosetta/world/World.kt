@@ -14,6 +14,8 @@ class World {
     var playerListInfo = Pair("", "")
     val bossBar = mutableMapOf<UUID, BossBar>()
 
+    var dimension = 0
+
     // scoreboard
     val scoreboard = mutableMapOf<String, Scoreboard>()
     var displayScoreboardName = ""
