@@ -172,7 +172,7 @@ class AdaptProtocol : MinecraftProtocol {
         } else if (rotated) {
             client.session.send(ClientPlayerRotationPacket(onGround, yaw, pitch))
         } else {
-            client.session.send(ClientPlayerMovementPacket(onGround))
+//            client.session.send(ClientPlayerMovementPacket(onGround))
         }
 
         this.positionUpdateTicks++

@@ -11,4 +11,7 @@ open class Entity {
     open val position = Vec3d()
     open val rotation = Vec2f()
 
+    open var width = 0.6f
+    open var height = 1.8f
+
 }

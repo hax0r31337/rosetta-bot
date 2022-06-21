@@ -2,12 +2,16 @@ package test.rosetta
 
 import me.liuli.rosetta.bot.MinecraftAccount
 import me.liuli.rosetta.bot.MinecraftBot
+import test.rosetta.conv.BlockConverter
 import test.rosetta.proto.AdaptProtocol
 
 object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        // initialize minecraft data
+        BlockConverter
+
         joinServer()
     }
 

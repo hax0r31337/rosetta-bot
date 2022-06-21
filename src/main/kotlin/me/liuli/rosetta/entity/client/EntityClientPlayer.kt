@@ -30,6 +30,7 @@ class EntityClientPlayer : EntityPlayer() {
     var foodSaturation = 0.0f
 
     // TODO: inventory
+    var heldItemSlot = 0
 
     var isSpawned = false
     var isAlive = true

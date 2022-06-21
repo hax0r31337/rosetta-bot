@@ -27,10 +27,7 @@ import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientConfi
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.*
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.*
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerAbilitiesPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerHealthPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerSetExperiencePacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.*
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.spawn.ServerSpawnGlobalEntityPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.spawn.ServerSpawnMobPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.spawn.ServerSpawnObjectPacket
@@ -49,6 +46,7 @@ import me.liuli.rosetta.entity.EntityPlayer
 import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.*
+import test.rosetta.conv.BlockConverter
 import test.rosetta.conv.CommonConverter
 
 class PacketProcess(private val handler: BotProtocolHandler, private val client: Client) {
@@ -99,7 +97,9 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
             is ServerEntityTeleportPacket -> {
                 handler.onTeleport(pk.entityId, pk.x, pk.y, pk.z, pk.yaw, pk.pitch, pk.isOnGround)
             }
-//            is ServerPlayerChangeHeldItemPacket
+            is ServerPlayerChangeHeldItemPacket -> {
+                handler.onHeldItemChange(pk.slot)
+            }
             is ServerEntityMovementPacket -> {
                 val entity = handler.bot.world.entities[pk.entityId] ?: return
                 val pos = entity.position
@@ -124,7 +124,7 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
             }
             is ServerMultiBlockChangePacket -> {
                 pk.records.forEach {
-                    handleBlockChange(it.block, it.position.x, it.position.y, it.position.z)
+                    handler.onBlockUpdate(it.position.x, it.position.y, it.position.z, BlockConverter.conv(it.block))
                 }
             }
             is ServerChunkDataPacket -> {
@@ -134,7 +134,7 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 handler.unloadChunk(pk.x, pk.z)
             }
             is ServerBlockChangePacket -> {
-                handleBlockChange(pk.record.block, pk.record.position.x, pk.record.position.y, pk.record.position.z)
+                handler.onBlockUpdate(pk.record.position.x, pk.record.position.y, pk.record.position.z, BlockConverter.conv(pk.record.block))
             }
 //            is ServerEntityCollectItemPacket
             is ServerChatPacket -> {
@@ -454,16 +454,11 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                         BlockState(id shr 4, id and 0xf)
                     }
 
-                    chunk.blocks[yPos * 256 + i] = Block(state.id, state.data, CommonConverter.blockType(state.id))
+                    chunk.blocks[yPos * 256 + i] = BlockConverter.conv(state)
                 }
                 yPos++
             }
         }
         handler.onChunk(chunk)
-    }
-
-    private fun handleBlockChange(state: BlockState, x: Int, y: Int, z: Int) {
-        val block = Block(state.id, state.data, CommonConverter.blockType(state.id))
-        handler.onBlockUpdate(x, y, z, block)
     }
 }

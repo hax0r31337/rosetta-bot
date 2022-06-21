@@ -2,19 +2,25 @@ package me.liuli.rosetta.world.block
 
 import com.google.gson.JsonObject
 
-data class Block(val id: Int, val data: Int, val type: Type) {
+data class Block(val id: Int, val material: Material,
+                 val hardness: Float = 0f, val diggable: Boolean = true, val harvertLimit: Array<Int>? = null,
+                 val boundingBox: AxisAlignedBB? = AxisAlignedBB.SHAPE_BLOCK) {
 
     var additionalData: JsonObject? = null
 
-    enum class Type {
+    enum class Material {
         AIR,
-        FULL_SOLID,
-        SOLID,
-        FLUID,
-        PASSABLE,
+        WOOD,
+        ROCK,
+        PLANT,
+        MELON,
+        DIRT,
+        WEB,
+        WOOL,
+        OTHER,
     }
 
     companion object {
-        val AIR = Block(0, 0, Type.AIR)
+        val AIR = Block(0, Material.AIR, boundingBox = null)
     }
 }

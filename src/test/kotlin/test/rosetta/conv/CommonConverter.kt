@@ -57,14 +57,6 @@ object CommonConverter {
         return effect.name.lowercase()
     }
 
-    fun blockType(id: Int): Block.Type {
-        return if(id == 0) {
-            Block.Type.AIR
-        } else {
-            Block.Type.SOLID
-        }
-    }
-
     fun enumBlockFacing(facing: EnumBlockFacing): BlockFace {
         return when(facing) {
             EnumBlockFacing.NORTH -> BlockFace.NORTH

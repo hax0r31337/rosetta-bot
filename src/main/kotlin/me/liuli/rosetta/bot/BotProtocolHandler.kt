@@ -221,4 +221,8 @@ class BotProtocolHandler(val bot: MinecraftBot) {
             bot.world.chunk.clear()
         }
     }
+
+    fun onHeldItemChange(heldItem: Int) {
+        bot.player.heldItemSlot = heldItem
+    }
 }

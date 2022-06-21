@@ -51,6 +51,8 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
         }, 0, tickDelay, TimeUnit.MILLISECONDS)
     }
 
+    private var lastSlot = 0
+
     fun tick() {
         emit(TickEvent())
         world.tick()
@@ -61,6 +63,10 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
             emit(DeathEvent())
         } else if (player.health > 0 && !player.isAlive) {
             player.isAlive = true
+        }
+        if (lastSlot != player.heldItemSlot) {
+            protocol.heldItemChange(player.heldItemSlot)
+            lastSlot = player.heldItemSlot
         }
         if (player.isAlive) {
             protocol.move(player.position.x, player.position.y, player.position.z,
