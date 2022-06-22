@@ -16,7 +16,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation("com.google.code.gson:gson:2.9.0")
 
-    testImplementation("com.github.liulihaocai:MCProtocolLib:81b1ec12c6")
+    testImplementation("com.github.liulihaocai:MCProtocolLib:344b7c8dde")
     testImplementation("com.github.GeyserMC:OpenNBT:1.0")
 }
 

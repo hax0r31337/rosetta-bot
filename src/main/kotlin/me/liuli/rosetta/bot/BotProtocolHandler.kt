@@ -6,7 +6,6 @@ import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.*
-import java.awt.Dimension
 import java.util.*
 
 class BotProtocolHandler(val bot: MinecraftBot) {
@@ -246,5 +245,9 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     fun onWorldBorderChangeWarning(warningDistance: Int, warningTime: Int) {
         bot.world.border.warningDistance = warningDistance
         bot.world.border.warningTime = warningTime
+    }
+
+    fun onRequestEditTileEntity(x: Int, y: Int, z: Int) {
+
     }
 }

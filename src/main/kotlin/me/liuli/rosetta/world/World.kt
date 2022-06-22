@@ -19,6 +19,7 @@ class World {
 
     // scoreboard
     val scoreboard = mutableMapOf<String, Scoreboard>()
+    val teams = mutableMapOf<String, Team>()
     var displayScoreboardName = ""
     val displayScoreboard: Scoreboard?
         get() = scoreboard[displayScoreboardName]
@@ -67,5 +68,9 @@ class World {
 
     fun putChunk(chunk: Chunk) {
         this.chunk[chunk.code] = chunk
+    }
+
+    fun findTeam(player: String): Team? {
+        return teams.values.firstOrNull { it.players.contains(player) }
     }
 }

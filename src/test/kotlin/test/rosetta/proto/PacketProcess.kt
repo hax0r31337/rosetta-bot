@@ -20,6 +20,7 @@ import com.github.steveice10.mc.protocol.data.game.world.block.BlockState
 import com.github.steveice10.mc.protocol.data.game.world.notify.ClientNotification
 import com.github.steveice10.mc.protocol.data.game.world.notify.RainStrengthValue
 import com.github.steveice10.mc.protocol.data.game.world.notify.ThunderStrengthValue
+import com.github.steveice10.mc.protocol.data.message.TranslationMessage
 import com.github.steveice10.mc.protocol.packet.MinecraftPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientPluginMessagePacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientResourcePackStatusPacket
@@ -46,7 +47,6 @@ import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.entity.EntityPlayer
 import me.liuli.rosetta.world.Chunk
-import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.*
 import test.rosetta.conv.BlockConverter
 import test.rosetta.conv.CommonConverter
@@ -138,7 +138,10 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
             is ServerBlockChangePacket -> {
                 handler.onBlockUpdate(pk.record.position.x, pk.record.position.y, pk.record.position.z, BlockConverter.conv(pk.record.block))
             }
-//            is ServerEntityCollectItemPacket
+            is ServerEntityCollectItemPacket -> {
+                // TODO: handle collect item
+                handler.onRemoveEntity(pk.collectedEntityId)
+            }
             is ServerChatPacket -> {
                 if (pk.type == MessageType.NOTIFICATION) {
                     handler.onTitle(EnumTitleType.ACTIONBAR, pk.message.fullText, this.titleFadeIn, this.titleStay, this.titleFadeOut)
@@ -202,8 +205,9 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 }
             }
 //            is ServerWindowItemsPacket
-//            is ServerOpenTileEntityEditorPacket
-//            is ServerUpdateTileEntityPacket
+            is ServerOpenTileEntityEditorPacket -> {
+                handler.onRequestEditTileEntity(pk.position.x, pk.position.y, pk.position.z)
+            }
 //            is ServerWindowPropertyPacket
 //            is ServerEntityEquipmentPacket
 //            is ServerCloseWindowPacket
@@ -348,15 +352,15 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 }
             }
             is ServerTeamPacket -> {
-                val sb = handler.bot.world.displayScoreboard ?: return
+                val world = handler.bot.world
                 if (pk.action == TeamAction.CREATE) {
-                    sb.teams[pk.teamName] = Scoreboard.Team(pk.teamName, pk.displayName, pk.prefix, pk.suffix, pk.players.toMutableList())
+                    world.teams[pk.teamName] = Team(pk.teamName, pk.displayName, pk.prefix, pk.suffix, pk.players.toMutableList())
                     return
                 } else if (pk.action == TeamAction.REMOVE) {
-                    sb.teams.remove(pk.teamName)
+                    world.teams.remove(pk.teamName)
                     return
                 }
-                var team = sb.teams[pk.teamName] ?: return
+                var team = world.teams[pk.teamName] ?: return
                 when(pk.action) {
                     TeamAction.ADD_PLAYER -> pk.players.forEach { team.players.add(it) }
                     TeamAction.REMOVE_PLAYER -> pk.players.forEach { team.players.remove(it) }

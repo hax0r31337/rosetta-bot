@@ -14,4 +14,5 @@ open class Entity {
     open var width = 0.6f
     open var height = 1.8f
 
+    // TODO: vehicle and entity attachments
 }
