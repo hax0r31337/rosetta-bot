@@ -2,48 +2,21 @@ package test.rosetta.proto
 
 import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftConstants
-import com.github.steveice10.mc.protocol.data.game.*
-import com.github.steveice10.mc.protocol.data.game.chunk.Column
-import com.github.steveice10.mc.protocol.data.game.entity.attribute.Attribute
-import com.github.steveice10.mc.protocol.data.game.entity.attribute.AttributeType
-import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata
+import com.github.steveice10.mc.protocol.data.game.ClientRequest
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.ItemStack
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position
-import com.github.steveice10.mc.protocol.data.game.entity.player.*
-import com.github.steveice10.mc.protocol.data.game.scoreboard.ObjectiveAction
-import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardAction
-import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardPosition
-import com.github.steveice10.mc.protocol.data.game.scoreboard.TeamAction
-import com.github.steveice10.mc.protocol.data.game.setting.ChatVisibility
-import com.github.steveice10.mc.protocol.data.game.setting.SkinPart
-import com.github.steveice10.mc.protocol.data.game.world.block.BlockState
-import com.github.steveice10.mc.protocol.data.game.world.notify.ClientNotification
-import com.github.steveice10.mc.protocol.data.game.world.notify.RainStrengthValue
-import com.github.steveice10.mc.protocol.data.game.world.notify.ThunderStrengthValue
-import com.github.steveice10.mc.protocol.packet.MinecraftPacket
+import com.github.steveice10.mc.protocol.data.game.entity.player.Hand
+import com.github.steveice10.mc.protocol.data.game.entity.player.InteractAction
+import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerAction
+import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerState
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.ClientPluginMessagePacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientRequestPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.ClientResourcePackStatusPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.*
-import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientConfirmTransactionPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.*
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.*
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerAbilitiesPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerHealthPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerSetExperiencePacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.spawn.ServerSpawnGlobalEntityPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.spawn.ServerSpawnMobPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.spawn.ServerSpawnObjectPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.spawn.ServerSpawnPlayerPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerDisplayScoreboardPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerScoreboardObjectivePacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerTeamPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerUpdateScorePacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.window.ServerConfirmTransactionPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.world.*
+import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientCloseWindowPacket
+import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientWindowActionPacket
+import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientSteerVehiclePacket
+import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientUpdateSignPacket
+import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientVehicleMovePacket
 import com.github.steveice10.packetlib.Client
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent
 import com.github.steveice10.packetlib.event.session.PacketReceivedEvent
@@ -51,12 +24,10 @@ import com.github.steveice10.packetlib.event.session.SessionAdapter
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory
 import me.liuli.rosetta.bot.BotProtocolHandler
 import me.liuli.rosetta.bot.MinecraftProtocol
-import me.liuli.rosetta.entity.Entity
-import me.liuli.rosetta.entity.EntityLiving
-import me.liuli.rosetta.entity.EntityPlayer
-import me.liuli.rosetta.world.Chunk
-import me.liuli.rosetta.world.block.Block
-import me.liuli.rosetta.world.data.*
+import me.liuli.rosetta.entity.inventory.EnumInventoryAction
+import me.liuli.rosetta.world.data.EnumBlockFacing
+import me.liuli.rosetta.world.data.EnumGameMode
+import me.liuli.rosetta.world.item.Item
 import test.rosetta.conv.CommonConverter
 import test.rosetta.event.PacketReceiveEvent
 import java.net.Proxy
@@ -191,6 +162,14 @@ class AdaptProtocol : MinecraftProtocol {
         this.lastOnGround = onGround
     }
 
+    override fun moveVehicle(x: Double, y: Double, z: Double, yaw: Float, pitch: Float, moveStrafe: Float, moveForward: Float, pressJump: Boolean, pressSneak: Boolean) {
+        client.session.send(ClientPlayerRotationPacket(false, yaw, pitch))
+        client.session.send(ClientSteerVehiclePacket(moveStrafe, moveForward, pressJump, pressSneak))
+        if (x != .0 || y != .0 || z != .0) {
+            client.session.send(ClientVehicleMovePacket(x, y, z, yaw, pitch))
+        }
+    }
+
     override fun heldItemChange(slot: Int) {
         client.session.send(ClientPlayerChangeHeldItemPacket(slot))
     }
@@ -229,6 +208,39 @@ class AdaptProtocol : MinecraftProtocol {
 
     override fun respawn() {
         client.session.send(ClientRequestPacket(ClientRequest.RESPAWN))
+    }
+
+    override fun signEdit(content: Array<String>, x: Int, y: Int, z: Int) {
+        client.session.send(ClientUpdateSignPacket(Position(x, y, z), content))
+    }
+
+    private var actionId = 0
+
+    override fun windowClick(window: Int, slotIn: Int, action: EnumInventoryAction) {
+        var slot = slotIn
+        val actionNum = when(action) {
+            EnumInventoryAction.CLICK -> 0 to 0
+            EnumInventoryAction.CLICK_OUTSIDE -> {
+                slot = -999
+                0 to 0
+            }
+            EnumInventoryAction.DIRECT_MOVE_STACK -> 1 to 0
+            EnumInventoryAction.DROP_SINGLE -> 4 to 0
+            EnumInventoryAction.DROP_STACK -> 4 to 1
+        }
+        client.session.send(ClientWindowActionPacket(window, actionId++, slot, ItemStack(0, 0), actionNum.first, actionNum.second))
+    }
+
+    override fun creativePickUp(slot: Int, item: Item) {
+        TODO("Not yet implemented")
+    }
+
+    override fun openWindow() {
+        client.session.send(ClientPlayerStatePacket(handler.bot.player.id, PlayerState.OPEN_HORSE_INVENTORY))
+    }
+
+    override fun closeWindow(id: Int) {
+        client.session.send(ClientCloseWindowPacket(id))
     }
 
     override fun chat(message: String) {

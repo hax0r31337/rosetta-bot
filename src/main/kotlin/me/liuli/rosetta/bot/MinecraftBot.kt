@@ -58,6 +58,7 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
         world.tick()
 
         // update player
+        // TODO: stream player ability
         if (player.health <= 0 && player.isAlive) {
             player.isAlive = false
             emit(DeathEvent())

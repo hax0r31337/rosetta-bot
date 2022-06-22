@@ -20,7 +20,6 @@ import com.github.steveice10.mc.protocol.data.game.world.block.BlockState
 import com.github.steveice10.mc.protocol.data.game.world.notify.ClientNotification
 import com.github.steveice10.mc.protocol.data.game.world.notify.RainStrengthValue
 import com.github.steveice10.mc.protocol.data.game.world.notify.ThunderStrengthValue
-import com.github.steveice10.mc.protocol.data.message.TranslationMessage
 import com.github.steveice10.mc.protocol.packet.MinecraftPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientPluginMessagePacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientResourcePackStatusPacket
