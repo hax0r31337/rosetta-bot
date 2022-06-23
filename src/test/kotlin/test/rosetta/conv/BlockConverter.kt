@@ -6,8 +6,11 @@ import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import me.liuli.rosetta.world.block.AxisAlignedBB
 import me.liuli.rosetta.world.block.Block
+import me.liuli.rosetta.world.block.IBlockHardnessModifier
 import me.liuli.rosetta.world.block.MultipleBB
+import me.liuli.rosetta.world.item.Item
 import test.rosetta.loadJsonFromWeb
+import java.util.Collections
 
 /**
  * block data from mc-data
@@ -20,6 +23,7 @@ object BlockConverter {
 
     private val shapes = mutableMapOf<Int, AxisAlignedBB?>()
     private val blockCache = mutableMapOf<Int, Block>()
+    private val hardnessModifiers = mutableMapOf<Block.Material, BlockHardnessModifier>()
 
     init {
         val collision = loadJsonFromWeb("https://raw.githubusercontent.com/PrismarineJS/minecraft-data/master/data/pc/1.12/blockCollisionShapes.json", "collision.json").asJsonObject
@@ -55,6 +59,17 @@ object BlockConverter {
             )
         }
 
+        val materials = loadJsonFromWeb("https://raw.githubusercontent.com/PrismarineJS/minecraft-data/master/data/pc/1.12/materials.json", "materials.json").asJsonObject
+        materials.entrySet().forEach { entry ->
+            val material = Block.Material.values().firstOrNull { it.name.equals(entry.key, true) } ?: return@forEach
+            val map = mutableMapOf<Int, Float>()
+            entry.value.asJsonObject.entrySet().forEach {
+                if (it.value.isJsonPrimitive) {
+                    map[it.key.toInt()] = it.value.asFloat
+                }
+            }
+            hardnessModifiers[material] = BlockHardnessModifier(Collections.unmodifiableMap(map))
+        }
     }
 
     private fun parseBB(json: JsonArray): AxisAlignedBB {
@@ -69,7 +84,7 @@ object BlockConverter {
     }
 
     fun conv(block: BlockState): Block {
-        val newId = block.id shl 4 or block.data
+        val newId = block.id shl 4 or (block.data and 0xF)
         if(blockCache.containsKey(newId)) {
             return blockCache[newId]!!
         }
@@ -92,9 +107,20 @@ object BlockConverter {
             }
         }
         val blockResult = Block(newId, mat, data.name, data.hardness, data.diggable, data.harvest, bb)
+        hardnessModifiers[mat]?.let {
+            blockResult.hardnessModifier.add(it)
+        }
         blockCache[newId] = blockResult
         return blockResult
     }
 
     class BlockInfo(val name: String, val material: Block.Material, val hardness: Float, val diggable: Boolean, val harvest: Array<Int>?)
+
+    class BlockHardnessModifier(private val affectItems: Map<Int, Float>) : IBlockHardnessModifier {
+        override fun getModifier(baseHardness: Float, item: Item): Float {
+            return baseHardness * if (affectItems.containsKey(item.id)) {
+                affectItems[item.id] ?: 1f
+            } else 1f
+        }
+    }
 }

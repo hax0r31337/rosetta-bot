@@ -33,11 +33,11 @@ object CommonConverter {
     }
 
     fun proxy(proxy: Proxy): ProxyInfo? {
-        when(proxy.type()) {
-            Proxy.Type.HTTP -> return ProxyInfo(ProxyInfo.Type.HTTP, proxy.address())
-            Proxy.Type.SOCKS -> return ProxyInfo(ProxyInfo.Type.SOCKS4, proxy.address())
+        return when(proxy.type()) {
+            Proxy.Type.HTTP -> ProxyInfo(ProxyInfo.Type.HTTP, proxy.address())
+            Proxy.Type.SOCKS -> ProxyInfo(ProxyInfo.Type.SOCKS4, proxy.address())
+            Proxy.Type.DIRECT -> null
         }
-        return null
     }
 
     fun bossBarColor(color: BossBarColor): Color {

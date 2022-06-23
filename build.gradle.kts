@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    kotlin("jvm") version "1.6.20"
+    kotlin("jvm") version "1.7.0"
     id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
@@ -24,12 +24,15 @@ dependencies {
 
 tasks {
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "17"
     }
     named<ShadowJar>("shadowJar") {
         from(sourceSets.test.get().output, sourceSets.main.get().output)
         archiveBaseName.set("shadow-test")
         configurations.add(project.configurations.testImplementation.get().also {
+            it.isCanBeResolved = true
+        })
+        configurations.add(project.configurations.implementation.get().also {
             it.isCanBeResolved = true
         })
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE

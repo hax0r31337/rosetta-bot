@@ -27,7 +27,6 @@ import me.liuli.rosetta.bot.MinecraftProtocol
 import me.liuli.rosetta.entity.inventory.EnumInventoryAction
 import me.liuli.rosetta.world.data.EnumBlockFacing
 import me.liuli.rosetta.world.data.EnumGameMode
-import me.liuli.rosetta.world.item.Item
 import test.rosetta.conv.CommonConverter
 import test.rosetta.event.PacketReceiveEvent
 import java.net.Proxy
@@ -231,7 +230,7 @@ class AdaptProtocol : MinecraftProtocol {
         client.session.send(ClientWindowActionPacket(window, actionId++, slot, ItemStack(0, 0), actionNum.first, actionNum.second))
     }
 
-    override fun creativePickUp(slot: Int, item: Item) {
+    override fun creativePickUp(slot: Int, item: me.liuli.rosetta.world.item.Item) {
         TODO("Not yet implemented")
     }
 

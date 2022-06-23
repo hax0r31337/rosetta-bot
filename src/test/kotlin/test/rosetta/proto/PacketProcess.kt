@@ -40,8 +40,10 @@ import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerS
 import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerTeamPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerUpdateScorePacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.window.ServerConfirmTransactionPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.window.ServerSetSlotPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.*
 import com.github.steveice10.packetlib.Client
+import com.google.gson.Gson
 import me.liuli.rosetta.bot.BotProtocolHandler
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
@@ -50,6 +52,7 @@ import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.data.*
 import test.rosetta.conv.BlockConverter
 import test.rosetta.conv.CommonConverter
+import test.rosetta.conv.ItemConverter
 import test.rosetta.data.EntityArmorStand
 import test.rosetta.data.MoveModifier
 
@@ -145,7 +148,6 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 handler.onBlockUpdate(pk.record.position.x, pk.record.position.y, pk.record.position.z, BlockConverter.conv(pk.record.block))
             }
             is ServerEntityCollectItemPacket -> {
-                // TODO: handle collect item
                 handler.onRemoveEntity(pk.collectedEntityId)
             }
             is ServerChatPacket -> {
@@ -324,8 +326,9 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                         handler.removeBossBar(pk.uuid)
                         return
                     }
+                    else -> return
                 }
-                handler.setBossBar(bar ?: return)
+                handler.setBossBar(bar)
             }
 //            is ServerVehicleMovePacket
 //            is ServerPluginMessagePacket
@@ -359,18 +362,13 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
             }
             is ServerTeamPacket -> {
                 val world = handler.bot.world
-                if (pk.action == TeamAction.CREATE) {
-                    world.teams[pk.teamName] = Team(pk.teamName, pk.displayName, pk.prefix, pk.suffix, pk.players.toMutableList())
-                    return
-                } else if (pk.action == TeamAction.REMOVE) {
-                    world.teams.remove(pk.teamName)
-                    return
-                }
-                var team = world.teams[pk.teamName] ?: return
+                var team = world.teams[pk.teamName]
                 when(pk.action) {
-                    TeamAction.ADD_PLAYER -> pk.players.forEach { team.players.add(it) }
-                    TeamAction.REMOVE_PLAYER -> pk.players.forEach { team.players.remove(it) }
-                    TeamAction.UPDATE -> {
+                    TeamAction.CREATE -> world.teams[pk.teamName] = Team(pk.teamName, pk.displayName, pk.prefix, pk.suffix, pk.players.toMutableList())
+                    TeamAction.REMOVE -> world.teams.remove(pk.teamName)
+                    TeamAction.ADD_PLAYER -> team?.let { _ -> pk.players.forEach { team.players.add(it) } }
+                    TeamAction.REMOVE_PLAYER -> team?.let { _ -> pk.players.forEach { team.players.remove(it) } }
+                    TeamAction.UPDATE -> team?.let { _ ->
                         team.displayName = pk.displayName
                         team.prefix = pk.prefix
                         team.suffix = pk.suffix
@@ -396,6 +394,7 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 return@forEach // equals to java continue
             }
             when(action) {
+                PlayerListEntryAction.ADD_PLAYER -> {}
                 PlayerListEntryAction.UPDATE_GAMEMODE -> {
                     entry.gamemode = CommonConverter.gamemode(it.gameMode)
                 }
@@ -462,6 +461,7 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                         handler.onHealthChange(entityId, entity.health, it.value.toFloat(), entity.absorption)
                     }
                 }
+                else -> return@forEach
             }
         }
     }

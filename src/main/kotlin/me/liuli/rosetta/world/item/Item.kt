@@ -4,7 +4,7 @@ import com.google.gson.JsonObject
 
 data class Item(val id: Int, var count: Int, var damage: Int, val type: Type) {
 
-    var additionalData: JsonObject? = null
+    var compoundTag: JsonObject? = null
 
     enum class Type {
         SWORD,

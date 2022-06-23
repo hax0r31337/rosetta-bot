@@ -3,6 +3,7 @@ package test.rosetta
 import me.liuli.rosetta.bot.MinecraftAccount
 import me.liuli.rosetta.bot.MinecraftBot
 import test.rosetta.conv.BlockConverter
+import test.rosetta.conv.ItemConverter
 import test.rosetta.proto.AdaptProtocol
 
 object Main {
@@ -13,6 +14,7 @@ object Main {
         kotlin.run {
             val time = System.currentTimeMillis()
             BlockConverter
+            ItemConverter
             println("init minecraft data cost: ${System.currentTimeMillis() - time}ms")
         }
 
