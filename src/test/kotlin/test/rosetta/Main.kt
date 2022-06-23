@@ -28,6 +28,6 @@ object Main {
 //        })
         bot.registerListeners(*(EventListener(bot).listeners)) // setup event listeners to handle events
 
-        bot.connectAsync("127.0.0.1", 25565) // connect to the server and don't block the current thread
+        bot.connect("127.0.0.1", 25565) // connect to the server and don't block the current thread
     }
 }

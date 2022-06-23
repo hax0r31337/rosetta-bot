@@ -36,7 +36,7 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
     }
 
     fun connectAsync(host: String, port: Int, proxy: Proxy = Proxy.NO_PROXY) {
-        thread {
+        thread(name = "rosetta-${account.username}") {
             connect(host, port, proxy)
         }
     }

@@ -13,7 +13,11 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
     @Listen
     fun onChat(event: ChatReceiveEvent) {
         println(event.message)
-        bot.player.sneaking = !bot.player.sneaking
+        if (event.message.contains("/register")) {
+            bot.chat("/register passwd0000 passwd0000")
+        } else if (event.message.contains("/login")) {
+            bot.chat("/login passwd0000")
+        }
     }
 
 //    @Listen

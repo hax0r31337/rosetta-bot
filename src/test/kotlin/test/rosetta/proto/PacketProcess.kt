@@ -9,6 +9,7 @@ import com.github.steveice10.mc.protocol.data.game.entity.player.Animation
 import com.github.steveice10.mc.protocol.data.game.entity.player.CombatState
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode
 import com.github.steveice10.mc.protocol.data.game.entity.player.Hand
+import com.github.steveice10.mc.protocol.data.game.entity.type.`object`.ObjectType
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ObjectiveAction
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardAction
 import com.github.steveice10.mc.protocol.data.game.scoreboard.ScoreboardPosition
@@ -49,6 +50,8 @@ import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.data.*
 import test.rosetta.conv.BlockConverter
 import test.rosetta.conv.CommonConverter
+import test.rosetta.data.EntityArmorStand
+import test.rosetta.data.MoveModifier
 
 class PacketProcess(private val handler: BotProtocolHandler, private val client: Client) {
 
@@ -68,7 +71,11 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 handler.onConnected()
             }
             is ServerSpawnObjectPacket -> {
-                val entity = Entity()
+                val entity = if (pk.type == ObjectType.ARMOR_STAND) {
+                    EntityArmorStand()
+                } else {
+                    Entity()
+                }
                 entity.id = pk.entityId
                 entity.position.set(pk.x, pk.y, pk.z)
                 entity.rotation.set(pk.yaw, pk.pitch)
@@ -432,16 +439,21 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
 
     private fun handleProperties(entityId: Int, properties: List<Attribute>) {
         properties.forEach {
-            // TODO modifier
             when (it.type) {
                 AttributeType.GENERIC_FLYING_SPEED -> {
                     if(entityId == handler.bot.player.id) {
-                        handler.onMoveSpeedChange(handler.bot.player.walkSpeed, it.value.toFloat())
+                        handler.onMoveSpeedChange(handler.bot.player.baseWalkSpeed, it.value.toFloat())
                     }
                 }
                 AttributeType.GENERIC_MOVEMENT_SPEED -> {
                     if(entityId == handler.bot.player.id) {
-                        handler.onMoveSpeedChange(it.value.toFloat(), handler.bot.player.flySpeed)
+                        handler.onMoveSpeedChange(it.value.toFloat(), handler.bot.player.baseFlySpeed)
+                        handler.bot.player.moveSpeedModifiers.also { m ->
+                            m.clear()
+                            it.modifiers.forEach {
+                                MoveModifier.build(it)?.let { m.add(it) }
+                            }
+                        }
                     }
                 }
                 AttributeType.GENERIC_MAX_HEALTH -> {

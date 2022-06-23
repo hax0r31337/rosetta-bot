@@ -3,6 +3,7 @@ package me.liuli.rosetta.bot
 import me.liuli.rosetta.bot.event.*
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
+import me.liuli.rosetta.entity.EntityPlayer
 import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.*
@@ -70,8 +71,8 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun onMoveSpeedChange(walkSpeed: Float, flySpeed: Float) {
-        bot.player.walkSpeed = walkSpeed
-        bot.player.flySpeed = flySpeed
+        bot.player.baseWalkSpeed = walkSpeed
+        bot.player.baseFlySpeed = flySpeed
     }
 
     fun onFoodChange(food: Float, foodSaturation: Float) {
@@ -230,6 +231,12 @@ class BotProtocolHandler(val bot: MinecraftBot) {
             bot.emit(DeathEvent(cause))
             bot.player.isAlive = false
         }
+    }
+
+    fun onPlayerPose(entityId: Int, sprinting: Boolean, sneaking: Boolean) {
+        val player = bot.world.entities[entityId] as? EntityPlayer ?: return
+        player.sprinting = sprinting
+        player.sneaking = sneaking
     }
 
     fun onWorldBorderChangeCenter(x: Double, z: Double, size: Int) {
