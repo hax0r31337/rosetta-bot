@@ -48,6 +48,7 @@ import me.liuli.rosetta.bot.BotProtocolHandler
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.entity.EntityPlayer
+import me.liuli.rosetta.entity.EntityVehicle
 import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.data.*
 import test.rosetta.conv.BlockConverter
@@ -76,6 +77,8 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
             is ServerSpawnObjectPacket -> {
                 val entity = if (pk.type == ObjectType.ARMOR_STAND) {
                     EntityArmorStand()
+                } else if(pk.type == ObjectType.MINECART) {
+                    EntityVehicle()
                 } else {
                     Entity()
                 }
@@ -177,7 +180,9 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
             is ServerSpawnPositionPacket -> {
                 handler.onSpawnPositionChange(pk.position.x, pk.position.y, pk.position.z)
             }
-//            is ServerEntitySetPassengersPacket
+            is ServerEntitySetPassengersPacket -> {
+                handler.onSetPassengers(pk.entityId, pk.passengerIds)
+            }
 //            is ServerEntityAttachPacket
 //            is ServerEntityStatusPacket
             is ServerPlayerHealthPacket -> {

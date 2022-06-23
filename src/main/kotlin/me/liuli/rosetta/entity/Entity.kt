@@ -14,5 +14,29 @@ open class Entity {
     open var width = 0.6f
     open var height = 1.8f
 
-    // TODO: vehicle and entity attachments
+    var riding: Entity? = null
+        set(value) {
+            if (field != null) {
+                field!!.removePassenger(this)
+            }
+            if (value != null) {
+                value!!.addPassenger(this)
+            }
+            field = value
+        }
+    open val passengers = mutableListOf<Entity>()
+
+    fun addPassenger(entity: Entity) {
+        passengers.add(entity)
+    }
+
+    fun removePassenger(entity: Entity) {
+        passengers.remove(entity)
+    }
+
+    fun tick() {
+        if(riding != null) {
+            position.set(riding!!.position)
+        }
+    }
 }

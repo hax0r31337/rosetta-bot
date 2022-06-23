@@ -5,6 +5,7 @@ import me.liuli.rosetta.bot.event.Event
 import me.liuli.rosetta.bot.event.Listener
 import me.liuli.rosetta.bot.event.TickEvent
 import me.liuli.rosetta.entity.client.EntityClientPlayer
+import me.liuli.rosetta.entity.client.PlayerController
 import me.liuli.rosetta.world.World
 import java.net.Proxy
 import java.util.concurrent.Executors
@@ -18,6 +19,7 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
     val world = World()
     var isConnected = false
     var tickDelay = 50L
+    val controller = PlayerController()
 
     private val handler = BotProtocolHandler(this)
     private var executor: ScheduledExecutorService? = null
@@ -70,8 +72,13 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
             lastSlot = player.heldItemSlot
         }
         if (player.isAlive) {
-            protocol.move(player.position.x, player.position.y, player.position.z,
-                player.rotation.x, player.rotation.y, player.onGround, player.sprinting, player.sneaking)
+            if (player.riding == null) {
+                protocol.move(player.position.x, player.position.y, player.position.z,
+                    player.rotation.x, player.rotation.y, player.onGround, player.sprinting, player.sneaking)
+            } else {
+                protocol.moveVehicle(player.position.x, player.position.y, player.position.z, player.rotation.x, player.rotation.y,
+                    controller.back, controller.forward, controller.jump, player.sneaking)
+            }
         }
     }
 

@@ -149,6 +149,11 @@ class BotProtocolHandler(val bot: MinecraftBot) {
 
 
     fun onRemoveEntity(entityId: Int) {
+        val entity = bot.world.entities[entityId] ?: return
+        entity.riding = null
+        entity.passengers.map { it }.forEach {
+            it.riding = null
+        }
         bot.world.entities.remove(entityId)
     }
 
@@ -256,5 +261,18 @@ class BotProtocolHandler(val bot: MinecraftBot) {
 
     fun onRequestEditTileEntity(x: Int, y: Int, z: Int) {
 
+    }
+
+    fun onSetPassengers(vehicleId: Int, passengers: IntArray) {
+        val vehicle = bot.world.entities[vehicleId] ?: return
+        vehicle.passengers.map { it }.forEach {
+            if (!passengers.contains(it.id)) {
+                it.riding = null
+            }
+        }
+        passengers.forEach {
+            val entity = bot.world.entities[it] ?: return@forEach
+            entity.riding = vehicle
+        }
     }
 }

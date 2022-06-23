@@ -42,6 +42,7 @@ class World {
     fun tick() {
         time++
         tickExisted++
+        entities.forEach { _, e -> e.tick() }
     }
 
     fun getChunkAt(x: Int, z: Int): Chunk? {

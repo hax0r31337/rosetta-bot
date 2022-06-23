@@ -2,6 +2,7 @@ package test.rosetta
 
 import me.liuli.rosetta.bot.MinecraftBot
 import me.liuli.rosetta.bot.event.*
+import me.liuli.rosetta.entity.EntityVehicle
 
 class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
@@ -27,6 +28,10 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
     @Listen
     fun onTick(event: TickEvent) {
+        if (bot.player.riding == null) {
+            val vehicle = bot.world.entities.values.firstOrNull { it is EntityVehicle && it.position.distanceTo(bot.player.position) < 4 } ?: return
+            bot.protocol.useItem(vehicle.id, 1)
+        }
     }
 
 //    @Listen
