@@ -14,11 +14,15 @@ data class Item(val id: Int, var count: Int, var damage: Int, val type: Type) {
         HOE,
         BOW,
         ARROW,
-        BOOTS,
-        LEGGINGS,
-        CHESTPLATE,
         HELMET,
+        CHESTPLATE,
+        LEGGINGS,
+        BOOTS,
         BLOCK,
         ITEM
+    }
+
+    companion object {
+        val AIR = Item(0, 0, 0, Type.ITEM)
     }
 }

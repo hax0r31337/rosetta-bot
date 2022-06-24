@@ -4,9 +4,12 @@ import me.liuli.rosetta.bot.event.*
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.entity.EntityPlayer
+import me.liuli.rosetta.entity.inventory.EnumEquipment
+import me.liuli.rosetta.entity.inventory.Window
 import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.*
+import me.liuli.rosetta.world.item.Item
 import java.util.*
 
 class BotProtocolHandler(val bot: MinecraftBot) {
@@ -273,6 +276,26 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         passengers.forEach {
             val entity = bot.world.entities[it] ?: return@forEach
             entity.riding = vehicle
+        }
+    }
+
+    fun setWindow(window: Window?) {
+        bot.player.openWindow = window
+    }
+
+    fun setEquipment(entityId: Int, equipment: EnumEquipment, item: Item) {
+        val entity = bot.world.entities[entityId] ?: return
+        entity.inventory[equipment] = item
+    }
+
+    fun updateSlot(windowId: Int, slot: Int, item: Item) {
+        if (windowId == 0) {
+            bot.player.inventory[slot] = item
+        } else {
+            val window = bot.player.openWindow ?: return
+            if (window.id == windowId) {
+                window[slot] = item
+            }
         }
     }
 }

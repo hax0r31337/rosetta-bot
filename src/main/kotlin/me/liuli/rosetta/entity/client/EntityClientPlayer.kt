@@ -1,6 +1,9 @@
 package me.liuli.rosetta.entity.client
 
 import me.liuli.rosetta.entity.EntityPlayer
+import me.liuli.rosetta.entity.inventory.Inventory
+import me.liuli.rosetta.entity.inventory.PlayerInventory
+import me.liuli.rosetta.entity.inventory.Window
 import me.liuli.rosetta.entity.move.IMoveSpeedModifier
 import me.liuli.rosetta.util.vec.Vec3f
 
@@ -40,7 +43,13 @@ class EntityClientPlayer : EntityPlayer() {
     var food = 20.0f
     var foodSaturation = 0.0f
 
-    // TODO: inventory
+    override val inventory = PlayerInventory(this)
+    var openWindow: Window? = null
+        set(value) {
+            field?.let { it.onClose() }
+            value?.let { it.onOpen(this) }
+            field = value
+        }
     var heldItemSlot = 0
 
     var isSpawned = false

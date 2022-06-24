@@ -32,7 +32,9 @@ object ItemConverter {
         }
     }
 
-    fun conv(stack: ItemStack): Item {
+    fun conv(stack: ItemStack?): Item {
+        stack ?: return Item.AIR
+
         val cache = itemCache[stack.id] ?: itemCache[1]!!
         val id = stack.id
         return Item(id, stack.amount, stack.data, cache.type).also {

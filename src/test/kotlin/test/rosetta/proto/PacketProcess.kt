@@ -39,8 +39,7 @@ import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerD
 import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerScoreboardObjectivePacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerTeamPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerUpdateScorePacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.window.ServerConfirmTransactionPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.window.ServerSetSlotPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.window.*
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.*
 import com.github.steveice10.packetlib.Client
 import com.google.gson.Gson
@@ -49,6 +48,7 @@ import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.entity.EntityPlayer
 import me.liuli.rosetta.entity.EntityVehicle
+import me.liuli.rosetta.entity.inventory.Window
 import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.data.*
 import test.rosetta.conv.BlockConverter
@@ -210,20 +210,38 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 val entity = handler.bot.player
                 handler.onSetMotion(entity.id, entity.motion.x, entity.motion.y, entity.motion.z)
             }
-//            is ServerOpenWindowPacket
-//            is ServerSetSlotPacket
+            is ServerOpenWindowPacket -> {
+                handler.setWindow(Window(pk.windowId, pk.slots, pk.name, pk.type.name))
+            }
+            is ServerSetSlotPacket -> {
+                handler.updateSlot(pk.windowId, pk.slot, ItemConverter.conv(pk.item))
+            }
             is ServerConfirmTransactionPacket -> {
                 if (!pk.accepted) {
                     client.session.send(ClientConfirmTransactionPacket(pk.windowId, pk.actionId, true))
                 }
             }
-//            is ServerWindowItemsPacket
+            is ServerWindowItemsPacket -> {
+                if (pk.windowId == 0){
+                    handler.bot.player.inventory.initStorage(pk.items.size)
+                }
+                pk.items.forEachIndexed { i, it ->
+                    it ?: return@forEachIndexed
+                    handler.updateSlot(pk.windowId, i, ItemConverter.conv(it))
+                }
+            }
             is ServerOpenTileEntityEditorPacket -> {
                 handler.onRequestEditTileEntity(pk.position.x, pk.position.y, pk.position.z)
             }
-//            is ServerWindowPropertyPacket
-//            is ServerEntityEquipmentPacket
-//            is ServerCloseWindowPacket
+            is ServerWindowPropertyPacket -> {
+                handler.bot.player.openWindow?.properties?.set(pk.rawProperty, pk.value)
+            }
+            is ServerEntityEquipmentPacket -> {
+                handler.setEquipment(pk.entityId, CommonConverter.equipmentSlot(pk.slot) ?: return, ItemConverter.conv(pk.item))
+            }
+            is ServerCloseWindowPacket -> {
+                handler.setWindow(null)
+            }
 //            is ServerBlockValuePacket
 //            is ServerBlockBreakAnimPacket
             is ServerNotifyClientPacket -> {

@@ -1,5 +1,7 @@
 package me.liuli.rosetta.entity
 
+import me.liuli.rosetta.entity.inventory.Inventory
+import me.liuli.rosetta.entity.inventory.MobInventory
 import me.liuli.rosetta.util.vec.Vec2f
 import me.liuli.rosetta.util.vec.Vec3d
 
@@ -13,6 +15,8 @@ open class Entity {
 
     open var width = 0.6f
     open var height = 1.8f
+
+    open val inventory: Inventory = MobInventory()
 
     var riding: Entity? = null
         set(value) {

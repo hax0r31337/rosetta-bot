@@ -2,10 +2,12 @@ package test.rosetta.conv
 
 import com.github.steveice10.mc.protocol.data.game.BossBarColor
 import com.github.steveice10.mc.protocol.data.game.entity.Effect
+import com.github.steveice10.mc.protocol.data.game.entity.EquipmentSlot
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode
 import com.github.steveice10.mc.protocol.data.game.setting.Difficulty
 import com.github.steveice10.mc.protocol.data.game.world.block.BlockFace
 import com.github.steveice10.packetlib.ProxyInfo
+import me.liuli.rosetta.entity.inventory.EnumEquipment
 import me.liuli.rosetta.world.data.EnumBlockFacing
 import me.liuli.rosetta.world.data.EnumDifficulty
 import me.liuli.rosetta.world.data.EnumGameMode
@@ -64,6 +66,17 @@ object CommonConverter {
             EnumBlockFacing.WEST -> BlockFace.WEST
             EnumBlockFacing.UP -> BlockFace.UP
             EnumBlockFacing.DOWN -> BlockFace.DOWN
+        }
+    }
+
+    fun equipmentSlot(equipmentSlot: EquipmentSlot): EnumEquipment? {
+        return when(equipmentSlot) {
+            EquipmentSlot.MAIN_HAND -> EnumEquipment.HAND
+            EquipmentSlot.HELMET -> EnumEquipment.HELMET
+            EquipmentSlot.CHESTPLATE -> EnumEquipment.CHESTPLATE
+            EquipmentSlot.LEGGINGS -> EnumEquipment.LEGGINGS
+            EquipmentSlot.BOOTS -> EnumEquipment.BOOTS
+            else -> null
         }
     }
 }

@@ -3,6 +3,7 @@ package test.rosetta
 import me.liuli.rosetta.bot.MinecraftBot
 import me.liuli.rosetta.bot.event.*
 import me.liuli.rosetta.entity.EntityVehicle
+import me.liuli.rosetta.world.data.EnumBlockFacing
 
 class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
@@ -28,10 +29,15 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
     @Listen
     fun onTick(event: TickEvent) {
-        if (bot.player.riding == null) {
-            val vehicle = bot.world.entities.values.firstOrNull { it is EntityVehicle && it.position.distanceTo(bot.player.position) < 4 } ?: return
-            bot.protocol.useItem(vehicle.id, 1)
-        }
+//        if (bot.player.openWindow == null && bot.world.tickExisted != 0L && bot.world.tickExisted % 100 == 0L) {
+//            bot.protocol.useItem(127, 74, 172, EnumBlockFacing.UP)
+//        }
+//        val window = bot.player.openWindow ?: return
+//        window.storage.forEachIndexed { index, item ->
+//            if (item.id != 0) {
+//                println("$index $item")
+//            }
+//        }
     }
 
 //    @Listen

@@ -57,8 +57,13 @@ class AdaptProtocol : MinecraftProtocol {
             override fun packetReceived(event: PacketReceivedEvent) {
                 val myEvent = PacketReceiveEvent(event.getPacket())
                 handler.bot.emit(myEvent)
-                if (!myEvent.isCancelled) {
+                if (myEvent.isCancelled) {
+                    return
+                }
+                try {
                     packetProcessor.handlePacketIn(myEvent.packet)
+                } catch (t: Throwable) {
+                    t.printStackTrace()
                 }
             }
 
