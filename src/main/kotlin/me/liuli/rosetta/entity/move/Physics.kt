@@ -29,6 +29,7 @@ import me.liuli.rosetta.bot.event.PreMotionEvent
 import me.liuli.rosetta.util.vec.Vec3f
 import me.liuli.rosetta.world.WorldIdentifier
 import me.liuli.rosetta.world.block.AxisAlignedBB
+import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.EnumBlockFacing
 import kotlin.math.*
 
@@ -103,6 +104,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         }
 
         if (isInWater || isInLava) {
+            bot.player.sprinting = false
             moveInWater(strafe, forward)
         } else {
             moveInAir(strafe, forward)
@@ -119,23 +121,23 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         var horizontalInertia = inertia
 
         if (isInWater) {
-            var strider = identifier.depthStrider(bot.player).toFloat()
+            var strider = identifier.depthStriderEnchantLevel(bot.player).toFloat()
             if (!bot.player.onGround) {
                 strider *= 0.5f
             }
             if (strider > 0) {
                 horizontalInertia += (0.546f - horizontalInertia) * strider / 3
                 acceleration *= (0.7f - acceleration) * strider / 3
-                if (identifier.dolphinsGrace(bot.player) > 0) horizontalInertia = 0.96f
+                if (identifier.dolphinsGraceLevel(bot.player) > 0) horizontalInertia = 0.96f
             }
         }
 
-        bot.player.applyMotionCollides()
         applyHeading(strafe, forward, acceleration)
+        bot.player.applyMotionCollides()
 
         motion.y *= inertia
         motion.y -= (if(isInWater) settings.waterGravity else settings.lavaGravity) *
-                (if(motion.y <= 0 && identifier.slowFalling(bot.player) > 0) settings.slowFallingMultiplier else 1f)
+                (if(motion.y <= 0 && identifier.slowFallingLevel(bot.player) > 0) settings.slowFallingMultiplier else 1f)
         motion.x *= horizontalInertia
         motion.z *= horizontalInertia
 
@@ -149,7 +151,45 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
     }
 
     private fun moveInAir(strafe: Float, forward: Float) {
+        val motion = bot.player.motion
+        val position = bot.player.position
 
+        var acceleration = settings.airborneAcceleration
+        var inertia = settings.airborneInertia
+        val blockUnder = bot.world.getBlockAt(position.x.toInt(), position.y.toInt() - 1, position.z.toInt()) ?: Block.AIR
+
+        if (bot.player.onGround) {
+            inertia *= identifier.getSlipperiness(blockUnder)
+            acceleration = (bot.player.walkSpeed * 0.1627714f / inertia.pow(3)).coerceAtLeast(0f) // acceleration should not be negative
+        }
+
+        applyHeading(strafe, forward, acceleration)
+
+        if (identifier.isClimbable(bot.world.getBlockAt(position.x.toInt(), position.y.toInt(), position.z.toInt()) ?: Block.AIR)) {
+            motion.x = motion.x.coerceIn(-settings.ladderMaxSpeed, settings.ladderMaxSpeed)
+            motion.z = motion.z.coerceIn(-settings.ladderMaxSpeed, settings.ladderMaxSpeed)
+            motion.y = motion.y.coerceAtMost(if (bot.player.sneaking) 0f else -settings.ladderMaxSpeed)
+        }
+
+        bot.player.applyMotionCollides()
+
+        // refresh isOnClimbableBlock cuz position changed
+        if (identifier.isClimbable(bot.world.getBlockAt(position.x.toInt(), position.y.toInt(), position.z.toInt()) ?: Block.AIR)
+            && (bot.player.isCollidedHorizontally || (identifier.climbUsingJump && bot.controller.jump))) {
+            motion.y = settings.ladderClimbSpeed
+        }
+
+        // apply friction and gravity
+        val levitation = identifier.levitationLevel(bot.player)
+        if (levitation > 0) {
+            motion.y += (0.05f * levitation - motion.y) * 0.2f
+        } else {
+            motion.y -= settings.gravity *
+                    (if(motion.y <= 0 && identifier.slowFallingLevel(bot.player) > 0) settings.slowFallingMultiplier else 1f)
+        }
+        motion.x *= inertia
+        motion.z *= inertia
+        motion.y *= settings.airDrag
     }
 
     private fun applyHeading(strafe: Float, forward: Float, multiplier: Float) {

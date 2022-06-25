@@ -7,6 +7,8 @@ import me.liuli.rosetta.world.block.Block
 
 class AdaptWorldIdentifier : WorldIdentifier {
 
+    override val climbUsingJump = false
+
     override fun getWaterDepth(block: Block): Int {
         return if(block.name == "water") {
             block.id and 0xF
@@ -25,11 +27,24 @@ class AdaptWorldIdentifier : WorldIdentifier {
         return (entity.effects.firstOrNull { it.name == "jump_boost" } ?: return 0).amplifier
     }
 
-    override fun depthStrider(entity: EntityLiving): Int {
+    override fun depthStriderEnchantLevel(entity: EntityLiving): Int {
         return 0 // TODO
     }
 
-    override fun dolphinsGrace(entity: EntityLiving) = 0  // Not yet implemented in 1.12
+    override fun dolphinsGraceLevel(entity: EntityLiving) = 0  // Not yet implemented in 1.12
 
-    override fun slowFalling(entity: EntityLiving) = 0  // Not yet implemented in 1.12
+    override fun slowFallingLevel(entity: EntityLiving) = 0  // Not yet implemented in 1.12
+    override fun levitationLevel(entity: EntityLiving): Int {
+        return (entity.effects.firstOrNull { it.name == "levitation" } ?: return 0).amplifier
+    }
+
+    override fun getSlipperiness(block: Block) = when(block.name) {
+        "slime" -> 0.8f
+        "ice", "packed_ice", "frosted_ice" -> 0.98f
+        else -> 0.6f
+    }
+
+    override fun isClimbable(block: Block): Boolean {
+        return block.name == "ladder" || block.name == "vine"
+    }
 }

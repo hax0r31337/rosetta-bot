@@ -17,7 +17,7 @@ class MoveModifier(val uuid: UUID, val amount: Float, val type: ModifierType, va
         return when(operation) {
             ModifierOperation.ADD -> baseSpeed + amount
             ModifierOperation.MULTIPLY -> baseSpeed + baseSpeed * amount
-            ModifierOperation.ADD_MULTIPLIED -> baseSpeed + baseSpeed * amount
+            ModifierOperation.ADD_MULTIPLIED -> baseSpeed + baseSpeed * amount // TODO: incorrect process
         }
     }
 

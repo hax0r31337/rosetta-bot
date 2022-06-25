@@ -14,6 +14,11 @@ open class PhysicsSetting {
     open val waterGravity = 0.02f // gravity / 16 when over 1.12
     open val lavaGravity = 0.02f // gravity / 4 when over 1.12
     open val outOfLiquidImpulse = 0.3f
+    open val airborneAcceleration = 0.02f
+    open val airborneInertia = 0.91f
+    open val ladderMaxSpeed = 0.15f
+    open val ladderClimbSpeed = 0.2f
+    open val airDrag = 1 - 0.02f
 
     companion object {
         val INSTANCE = PhysicsSetting()

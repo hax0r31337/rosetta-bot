@@ -4,6 +4,8 @@ import com.github.steveice10.mc.protocol.data.game.*
 import com.github.steveice10.mc.protocol.data.game.chunk.Column
 import com.github.steveice10.mc.protocol.data.game.entity.attribute.Attribute
 import com.github.steveice10.mc.protocol.data.game.entity.attribute.AttributeType
+import com.github.steveice10.mc.protocol.data.game.entity.attribute.ModifierOperation
+import com.github.steveice10.mc.protocol.data.game.entity.attribute.ModifierType
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata
 import com.github.steveice10.mc.protocol.data.game.entity.player.Animation
 import com.github.steveice10.mc.protocol.data.game.entity.player.CombatState
@@ -56,6 +58,7 @@ import test.rosetta.conv.CommonConverter
 import test.rosetta.conv.ItemConverter
 import test.rosetta.data.EntityArmorStand
 import test.rosetta.data.MoveModifier
+import java.util.*
 
 class PacketProcess(private val handler: BotProtocolHandler, private val client: Client) {
 
@@ -459,6 +462,8 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
         }
     }
 
+    private val sprintingUUID = UUID.fromString("662a6b8d-da3e-4c1c-8813-96ea6097278d")
+
     private fun handleProperties(entityId: Int, properties: List<Attribute>) {
         properties.forEach {
             when (it.type) {
@@ -474,6 +479,9 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                             m.clear()
                             it.modifiers.forEach {
                                 MoveModifier.build(it)?.let { m.add(it) }
+                            }
+                            if (!it.modifiers.any { it.uuid == sprintingUUID }) {
+                                MoveModifier(sprintingUUID, 0.3f, ModifierType.SPRINT_SPEED_BOOST, ModifierOperation.ADD_MULTIPLIED)
                             }
                         }
                     }

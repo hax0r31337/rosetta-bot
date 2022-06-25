@@ -102,7 +102,6 @@ class World {
         return list
     }
 
-
     fun getSurroundingBlocks(queryBB: AxisAlignedBB): List<Vec3i> {
         return getSurroundingBlocks(queryBB) { true }
     }
