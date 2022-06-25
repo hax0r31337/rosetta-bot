@@ -25,9 +25,14 @@ class TeleportEvent(var x: Double, var y: Double, var z: Double, var yaw: Float,
 class ChatReceiveEvent(var message: String, var json: String) : Event()
 
 /**
- * tick... tack...
+ * called every tick before stream position to server
  */
-class TickEvent : Event()
+class PreMotionEvent : Event()
+
+/**
+ * called every tick after stream position to server
+ */
+class PostMotionEvent : Event()
 
 /**
  * called when display the title

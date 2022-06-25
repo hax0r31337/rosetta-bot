@@ -1,9 +1,6 @@
 package me.liuli.rosetta.bot
 
-import me.liuli.rosetta.bot.event.DeathEvent
-import me.liuli.rosetta.bot.event.Event
-import me.liuli.rosetta.bot.event.Listener
-import me.liuli.rosetta.bot.event.TickEvent
+import me.liuli.rosetta.bot.event.*
 import me.liuli.rosetta.entity.client.EntityClientPlayer
 import me.liuli.rosetta.entity.client.PlayerController
 import me.liuli.rosetta.world.World
@@ -56,11 +53,14 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
     private var lastSlot = 0
 
     fun tick() {
-        emit(TickEvent())
         world.tick()
 
         // update player
-        // TODO: stream player ability
+        emit(PreMotionEvent())
+        if (player.needAbilitiesUpdate) {
+            protocol.abilities(player.invincible, player.flying, player.canFly, player.baseWalkSpeed, player.baseFlySpeed)
+            player.needAbilitiesUpdate = false
+        }
         if (player.health <= 0 && player.isAlive) {
             player.isAlive = false
             emit(DeathEvent())
@@ -71,15 +71,16 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
             protocol.heldItemChange(player.heldItemSlot)
             lastSlot = player.heldItemSlot
         }
-        if (player.isAlive) {
+        if (player.isAlive && world.getChunkAt(player.position.x.toInt() shr 4, player.position.z.toInt() shr 4) != null) {
             if (player.riding == null) {
                 protocol.move(player.position.x, player.position.y, player.position.z,
                     player.rotation.x, player.rotation.y, player.onGround, player.sprinting, player.sneaking)
             } else {
                 protocol.moveVehicle(player.position.x, player.position.y, player.position.z, player.rotation.x, player.rotation.y,
-                    controller.back, controller.forward, controller.jump, player.sneaking)
+                    controller.strafeValue, controller.forwardValue, controller.jump, player.sneaking)
             }
         }
+        emit(PostMotionEvent())
     }
 
     fun disconnect() {

@@ -2,7 +2,9 @@ package me.liuli.rosetta.world
 
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.util.vec.Vec3i
+import me.liuli.rosetta.world.block.AxisAlignedBB
 import me.liuli.rosetta.world.block.Block
+import me.liuli.rosetta.world.block.ComplexShape
 import me.liuli.rosetta.world.data.*
 import java.util.*
 
@@ -42,7 +44,7 @@ class World {
     fun tick() {
         time++
         tickExisted++
-        entities.forEach { _, e -> e.tick() }
+        entities.forEach { (_, e) -> e.tick() }
     }
 
     fun getChunkAt(x: Int, z: Int): Chunk? {
@@ -73,5 +75,53 @@ class World {
 
     fun findTeam(player: String): Team? {
         return teams.values.firstOrNull { it.players.contains(player) }
+    }
+
+    fun getSurroundingBBs(queryBB: AxisAlignedBB): List<AxisAlignedBB> {
+        return getSurroundingBBs(queryBB) { true }
+    }
+
+    fun getSurroundingBBs(queryBB: AxisAlignedBB, blockOk: (Block) -> Boolean): List<AxisAlignedBB> {
+        val list = mutableListOf<AxisAlignedBB>()
+
+        for (y in (queryBB.minY - 1).toInt()..(queryBB.maxY).toInt()) {
+            for (x in queryBB.minX.toInt()..queryBB.maxX.toInt()) {
+                for (z in queryBB.minZ.toInt()..queryBB.maxZ.toInt()) {
+                    val shape = getBlockAt(x, y, z)?.let { if(blockOk(it)) it else null }?.shape
+                    if (shape is ComplexShape) {
+                        for (subshape in shape.shapes) {
+                            list.add(AxisAlignedBB(x.toDouble(), y.toDouble(), z.toDouble(), subshape))
+                        }
+                    } else if (shape != null) {
+                        list.add(AxisAlignedBB(x.toDouble(), y.toDouble(), z.toDouble(), shape))
+                    }
+                }
+            }
+        }
+
+        return list
+    }
+
+
+    fun getSurroundingBlocks(queryBB: AxisAlignedBB): List<Vec3i> {
+        return getSurroundingBlocks(queryBB) { true }
+    }
+
+    fun getSurroundingBlocks(queryBB: AxisAlignedBB, blockOk: (Block) -> Boolean): List<Vec3i> {
+        val list = mutableListOf<Vec3i>()
+
+        for (y in (queryBB.minY - 1).toInt()..(queryBB.maxY).toInt()) {
+            for (x in queryBB.minX.toInt()..queryBB.maxX.toInt()) {
+                for (z in queryBB.minZ.toInt()..queryBB.maxZ.toInt()) {
+                    getBlockAt(x, y, z)?.also {
+                        if (blockOk(it)) {
+                            list.add(Vec3i(x, y, z))
+                        }
+                    }
+                }
+            }
+        }
+
+        return list
     }
 }

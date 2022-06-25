@@ -166,9 +166,9 @@ class AdaptProtocol : MinecraftProtocol {
         this.lastOnGround = onGround
     }
 
-    override fun moveVehicle(x: Double, y: Double, z: Double, yaw: Float, pitch: Float, moveStrafe: Boolean, moveForward: Boolean, pressJump: Boolean, pressSneak: Boolean) {
+    override fun moveVehicle(x: Double, y: Double, z: Double, yaw: Float, pitch: Float, moveStrafe: Float, moveForward: Float, pressJump: Boolean, pressSneak: Boolean) {
         client.session.send(ClientPlayerRotationPacket(false, yaw, pitch))
-        client.session.send(ClientSteerVehiclePacket(if(moveStrafe) 0.98f else 0f, if(moveForward) 0.98f else 0f, pressJump, pressSneak))
+        client.session.send(ClientSteerVehiclePacket(moveStrafe * 0.98f, moveForward * 0.98f, pressJump, pressSneak))
 //        client.session.send(ClientVehicleMovePacket(x, y, z, yaw, pitch))
     }
 

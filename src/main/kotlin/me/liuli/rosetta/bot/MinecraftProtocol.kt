@@ -46,7 +46,7 @@ interface MinecraftProtocol {
     /**
      * call this insteadof [move] when player is on vehicle
      */
-    fun moveVehicle(x: Double, y: Double, z: Double, yaw: Float, pitch: Float, moveStrafe: Boolean, moveForward: Boolean, pressJump: Boolean, pressSneak: Boolean)
+    fun moveVehicle(x: Double, y: Double, z: Double, yaw: Float, pitch: Float, moveStrafe: Float, moveForward: Float, pressJump: Boolean, pressSneak: Boolean)
 
     /**
      * switch the current item

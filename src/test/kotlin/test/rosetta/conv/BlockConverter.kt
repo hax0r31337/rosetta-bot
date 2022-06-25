@@ -4,10 +4,10 @@ import com.github.steveice10.mc.protocol.data.game.world.block.BlockState
 import com.google.gson.JsonArray
 import com.google.gson.JsonNull
 import com.google.gson.JsonObject
-import me.liuli.rosetta.world.block.AxisAlignedBB
+import me.liuli.rosetta.world.block.Shape
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.block.IBlockHardnessModifier
-import me.liuli.rosetta.world.block.MultipleBB
+import me.liuli.rosetta.world.block.ComplexShape
 import me.liuli.rosetta.world.item.Item
 import test.rosetta.loadJsonFromWeb
 import java.util.Collections
@@ -21,7 +21,7 @@ object BlockConverter {
     val collisionJson: JsonObject
     val blocksInfo = mutableMapOf<Int, BlockInfo>()
 
-    private val shapes = mutableMapOf<Int, AxisAlignedBB?>()
+    private val shapes = mutableMapOf<Int, Shape?>()
     private val blockCache = mutableMapOf<Int, Block>()
     private val hardnessModifiers = mutableMapOf<Block.Material, BlockHardnessModifier>()
 
@@ -32,9 +32,9 @@ object BlockConverter {
             shapes[it.key.toInt()] = if(arr.size() == 0) {
                 null
             } else if(arr.size() == 1) {
-                parseBB(arr[0].asJsonArray)
+                parseShape(arr[0].asJsonArray)
             } else {
-                MultipleBB(*(arr.map { parseBB(it.asJsonArray) }.toTypedArray()))
+                ComplexShape(*(arr.map { parseShape(it.asJsonArray) }.toTypedArray()))
             }
         }
         collisionJson = collision.getAsJsonObject("blocks")
@@ -72,8 +72,8 @@ object BlockConverter {
         }
     }
 
-    private fun parseBB(json: JsonArray): AxisAlignedBB {
-        return AxisAlignedBB(
+    private fun parseShape(json: JsonArray): Shape {
+        return Shape(
             json[0].asDouble,
             json[1].asDouble,
             json[2].asDouble,

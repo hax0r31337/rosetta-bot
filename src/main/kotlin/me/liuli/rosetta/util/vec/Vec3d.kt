@@ -5,6 +5,9 @@ import kotlin.math.sqrt
 
 data class Vec3d(var x: Double = .0, var y: Double = .0, var z: Double = .0) {
 
+    val norm: Double
+        get() = sqrt(x * x + y * y + z * z)
+
     fun set(x: Double, y: Double, z: Double): Vec3d {
         this.x = x
         this.y = y
@@ -25,5 +28,15 @@ data class Vec3d(var x: Double = .0, var y: Double = .0, var z: Double = .0) {
 
     fun distanceTo(vec: Vec3d): Double {
         return distanceTo(vec.x, vec.y, vec.z)
+    }
+
+    fun normalize(): Vec3d {
+        val norm = this.norm
+        if (norm != .0) {
+            this.x /= norm
+            this.y /= norm
+            this.z /= norm
+        }
+        return this
     }
 }

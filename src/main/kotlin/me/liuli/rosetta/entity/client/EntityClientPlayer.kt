@@ -13,10 +13,33 @@ class EntityClientPlayer : EntityPlayer() {
     val motion = Vec3f()
     var onGround = false
 
+    // bounding
+    var isCollidedHorizontally = false
+    var isCollidedVertically = false
+
     // abilities
+    var needAbilitiesUpdate = false
     var invincible = false
+        set(value) {
+            if (field != value) {
+                needAbilitiesUpdate = true
+            }
+            field = value
+        }
     var flying = false
+        set(value) {
+            if (field != value) {
+                needAbilitiesUpdate = true
+            }
+            field = value
+        }
     var canFly = false
+        set(value) {
+            if (field != value) {
+                needAbilitiesUpdate = true
+            }
+            field = value
+        }
 
     // movement
     var baseFlySpeed = 0.05f
@@ -55,4 +78,14 @@ class EntityClientPlayer : EntityPlayer() {
     var isSpawned = false
     var isAlive = true
 
+    open fun applyMotionCollides() {
+//        TODO("Not yet implemented")
+        applyMotion()
+    }
+
+    open fun applyMotion() {
+        position.x += motion.x
+        position.y += motion.y
+        position.z += motion.z
+    }
 }

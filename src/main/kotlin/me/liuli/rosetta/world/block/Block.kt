@@ -5,7 +5,7 @@ import me.liuli.rosetta.world.item.Item
 
 data class Block(val id: Int, val material: Material, val name: String,
                  val hardness: Float = 0f, val diggable: Boolean = true, val harvertLimit: Array<Int>? = null,
-                 val boundingBox: AxisAlignedBB? = AxisAlignedBB.SHAPE_BLOCK) {
+                 val shape: Shape? = Shape.SHAPE_BLOCK) {
 
     val hardnessModifier = mutableListOf<IBlockHardnessModifier>()
 
@@ -30,6 +30,6 @@ data class Block(val id: Int, val material: Material, val name: String,
     }
 
     companion object {
-        val AIR = Block(0, Material.AIR, "air", boundingBox = null)
+        val AIR = Block(0, Material.AIR, "air", shape = null)
     }
 }

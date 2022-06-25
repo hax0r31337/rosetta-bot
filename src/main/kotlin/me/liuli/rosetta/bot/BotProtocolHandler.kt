@@ -49,9 +49,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
             return false
         }
         val player = bot.player
-        player.motion.x = 0f
-        player.motion.y = 0f
-        player.motion.z = 0f
+        player.motion.set(0f, 0f, 0f)
         player.position.set(event.x, event.y, event.z)
         player.rotation.set(event.yaw, event.pitch)
         player.isSpawned = true
@@ -71,6 +69,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         bot.player.flying = isFlying
         bot.player.canFly = canFly
         bot.player.invincible = isInvincible
+        bot.player.needAbilitiesUpdate = false
     }
 
     fun onMoveSpeedChange(walkSpeed: Float, flySpeed: Float) {

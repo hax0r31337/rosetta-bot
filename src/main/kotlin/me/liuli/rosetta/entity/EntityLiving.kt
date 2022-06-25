@@ -12,4 +12,12 @@ open class EntityLiving : Entity() {
     val effects = mutableListOf<PotionEffect>()
 
     override val type = "living"
+
+    override fun tick() {
+        super.tick()
+        effects.forEach {
+            it.duration--
+        }
+        effects.removeIf { it.duration <= 0 }
+    }
 }

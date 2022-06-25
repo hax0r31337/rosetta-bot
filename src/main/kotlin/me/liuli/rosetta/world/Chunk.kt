@@ -8,11 +8,11 @@ class Chunk(val x: Int, val z: Int, val height: Int = 256) {
     val code = code(x, z)
 
     fun getBlockAt(x: Int, y: Int, z: Int): Block {
-        return blocks[y * 256 + (x shl 4 or z)]
+        return blocks[y * 256 + (z shl 4 or x)]
     }
 
     fun setBlockAt(x: Int, y: Int, z: Int, block: Block) {
-        blocks[y * 256 + (x shl 4 or z)] = block
+        blocks[y * 256 + (z shl 4 or x)] = block
     }
 
     companion object {

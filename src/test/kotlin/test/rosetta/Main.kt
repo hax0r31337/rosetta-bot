@@ -2,9 +2,11 @@ package test.rosetta
 
 import me.liuli.rosetta.bot.MinecraftAccount
 import me.liuli.rosetta.bot.MinecraftBot
+import me.liuli.rosetta.entity.move.Physics
 import test.rosetta.conv.BlockConverter
 import test.rosetta.conv.ItemConverter
 import test.rosetta.proto.AdaptProtocol
+import test.rosetta.proto.AdaptWorldIdentifier
 
 object Main {
 
@@ -28,6 +30,7 @@ object Main {
 //        bot.registerListener(FuncListener(DisconnectEvent::class.java) {
 //            println("Disconnected: ${it.reason}")
 //        })
+        Physics(bot, AdaptWorldIdentifier()).setupTickListener()
         bot.registerListeners(*(EventListener(bot).listeners)) // setup event listeners to handle events
 
         bot.connect("127.0.0.1", 25565) // connect to the server and don't block the current thread

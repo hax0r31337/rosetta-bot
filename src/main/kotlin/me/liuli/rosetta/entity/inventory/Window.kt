@@ -23,7 +23,6 @@ class Window(val id: Int, sizeIn: Int, val name: String, val type: String) : Inv
 
     override fun set(index: Int, item: Item) {
         if (index >= size) {
-            println("$index $size")
             player ?: throw IllegalStateException("Unable to fallback slot(player=null)")
             player!!.inventory[index - size + fallbackOffset] = item
             return
