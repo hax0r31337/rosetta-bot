@@ -19,6 +19,7 @@ open class PhysicsSetting {
     open val ladderMaxSpeed = 0.15f
     open val ladderClimbSpeed = 0.2f
     open val airDrag = 1 - 0.02f
+    open val stepHeight = 0.6
 
     companion object {
         val INSTANCE = PhysicsSetting()

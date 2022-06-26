@@ -27,7 +27,7 @@ class ChatReceiveEvent(var message: String, var json: String) : Event()
 /**
  * called every tick before stream position to server
  */
-class PreMotionEvent : Event()
+class PreMotionEvent : EventCancellable()
 
 /**
  * called every tick after stream position to server

@@ -1,26 +1,3 @@
-/*
-MIT License
-
-Copyright (c) 2020 PrismarineJS
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
 package me.liuli.rosetta.entity.move
 
 import me.liuli.rosetta.bot.MinecraftBot
@@ -51,6 +28,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
      */
     fun setupTickListener() {
         bot.registerListener(FuncListener(PreMotionEvent::class.java) {
+            if (it.isCancelled) return@FuncListener
             simulate()
         })
     }
@@ -61,7 +39,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         }
 
         applyWaterFlow()
-        isInLava = bot.world.getSurroundingBlocks(bot.player.axisAlignedBB) {
+        isInLava = bot.world.getSurroundingBlocks(bot.player.axisAlignedBB.apply { contract(0.1, 0.4, 0.1) }) {
             identifier.isLava(it)
         }.isNotEmpty()
 
@@ -133,7 +111,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         }
 
         applyHeading(strafe, forward, acceleration)
-        bot.player.applyMotionCollides()
+        bot.player.applyMotionCollides(bot.world, settings, identifier)
 
         motion.y *= inertia
         motion.y -= (if(isInWater) settings.waterGravity else settings.lavaGravity) *
@@ -171,7 +149,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
             motion.y = motion.y.coerceAtMost(if (bot.player.sneaking) 0f else -settings.ladderMaxSpeed)
         }
 
-        bot.player.applyMotionCollides()
+        bot.player.applyMotionCollides(bot.world, settings, identifier)
 
         // refresh isOnClimbableBlock cuz position changed
         if (identifier.isClimbable(bot.world.getBlockAt(position.x.toInt(), position.y.toInt(), position.z.toInt()) ?: Block.AIR)
@@ -243,7 +221,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
     }
 
     private fun applyWaterFlow() {
-        val waterCollides = bot.world.getSurroundingBlocks(bot.player.axisAlignedBB) {
+        val waterCollides = bot.world.getSurroundingBlocks(bot.player.axisAlignedBB.apply { contract(0.001, 0.401, 0.001) }) {
             identifier.getWaterDepth(it) != -1
         }
         isInWater = waterCollides.isNotEmpty()

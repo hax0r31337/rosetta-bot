@@ -27,6 +27,11 @@ interface WorldIdentifier {
     fun isHoneyBlock(block: Block): Boolean
 
     /**
+     * @return true when the block is bounce-able (etc. Slime Block)
+     */
+    fun isBlockBounceable(block: Block): Boolean
+
+    /**
      * https://www.mcpk.wiki/w/index.php?title=Slipperiness
      * @return slipperiness of the target block
      */

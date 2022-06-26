@@ -22,6 +22,9 @@ class AdaptWorldIdentifier : WorldIdentifier {
     }
 
     override fun isHoneyBlock(block: Block) = false // Not yet implemented in 1.12
+    override fun isBlockBounceable(block: Block): Boolean {
+        return block.name == "slime"
+    }
 
     override fun jumpBoostLevel(entity: EntityLiving): Int {
         return (entity.effects.firstOrNull { it.name == "jump_boost" } ?: return 0).amplifier

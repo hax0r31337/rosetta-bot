@@ -18,6 +18,15 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
             bot.chat("/register passwd0000 passwd0000")
         } else if (event.message.contains("/login")) {
             bot.chat("/login passwd0000")
+        } else if (event.message.contains("forward")) {
+            bot.controller.forward = !bot.controller.forward
+            bot.chat("MOVE_F ${bot.controller.forward}")
+        } else if (event.message.contains("jump")) {
+            bot.controller.jump = !bot.controller.jump
+            bot.chat("MOVE_J ${bot.controller.jump}")
+        } else if (event.message.contains("sneak")) {
+            bot.player.sneaking = !bot.player.sneaking
+            bot.chat("MOVE_SN ${bot.player.sneaking}")
         }
     }
 

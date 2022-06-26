@@ -56,7 +56,10 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
         world.tick()
 
         // update player
-        emit(PreMotionEvent())
+        val event = PreMotionEvent()
+        emit(event)
+        if (event.isCancelled) return
+
         if (player.needAbilitiesUpdate) {
             protocol.abilities(player.invincible, player.flying, player.canFly, player.baseWalkSpeed, player.baseFlySpeed)
             player.needAbilitiesUpdate = false

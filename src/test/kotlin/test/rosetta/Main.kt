@@ -30,8 +30,8 @@ object Main {
 //        bot.registerListener(FuncListener(DisconnectEvent::class.java) {
 //            println("Disconnected: ${it.reason}")
 //        })
-        Physics(bot, AdaptWorldIdentifier()).setupTickListener()
         bot.registerListeners(*(EventListener(bot).listeners)) // setup event listeners to handle events
+        Physics(bot, AdaptWorldIdentifier()).setupTickListener()
 
         bot.connect("127.0.0.1", 25565) // connect to the server and don't block the current thread
     }
