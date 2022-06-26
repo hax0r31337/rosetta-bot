@@ -61,12 +61,12 @@ class World {
 
     fun getBlockAt(x: Int, y: Int, z: Int): Block? {
         val chunk = getChunkAt(x shr 4, z shr 4) ?: return null
-        return chunk.getBlockAt(x and 0xF, y, z and 0xF)
+        return chunk.getBlockAt(x and 0xF, y.coerceAtLeast(0), z and 0xF)
     }
 
     fun setBlockAt(x: Int, y: Int, z: Int, block: Block) {
         val chunk = getChunkAt(x shr 4, z shr 4) ?: return
-        chunk.setBlockAt(x and 0xF, y, z and 0xF, block)
+        chunk.setBlockAt(x and 0xF, y.coerceAtLeast(0), z and 0xF, block)
     }
 
     fun putChunk(chunk: Chunk) {

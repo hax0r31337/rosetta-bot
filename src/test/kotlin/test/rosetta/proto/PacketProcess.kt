@@ -74,7 +74,7 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 handler.onGamemodeChange(CommonConverter.gamemode(pk.gameMode))
                 handler.onDifficultyChange(CommonConverter.difficulty(pk.difficulty))
                 client.session.send(ClientSettingsPacket("en_US", 8, ChatVisibility.FULL, true, SkinPart.values(), Hand.MAIN_HAND))
-                client.session.send(ClientPluginMessagePacket("MC|Brand", "vanilla".toByteArray()))
+                client.session.send(ClientPluginMessagePacket("MC|Brand", byteArrayOf(0x07, 0x76, 0x61, 0x6E, 0x69, 0x6C, 0x6C, 0x61)))
                 handler.onConnected()
             }
             is ServerSpawnObjectPacket -> {

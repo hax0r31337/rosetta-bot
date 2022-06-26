@@ -115,4 +115,8 @@ interface MinecraftProtocol {
      */
     fun closeWindow(id: Int)
 
+    /**
+     * send packet which taught server player is jumped
+     */
+    fun jump()
 }

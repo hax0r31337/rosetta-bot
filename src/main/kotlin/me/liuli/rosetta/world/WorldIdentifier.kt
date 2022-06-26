@@ -6,9 +6,13 @@ import me.liuli.rosetta.world.block.Block
 interface WorldIdentifier {
 
     /**
-     * @return player can climb ladders and vines by pressing jump, implemented in 1.14+
+     * player can climb ladders and vines by pressing jump, implemented in 1.14+
      */
     val climbUsingJump: Boolean
+    /**
+     * Velocity changes are caused by blocks are triggered by collision with the block
+     */
+    val velocityBlocksOnCollision: Boolean
 
     /**
      * get water depth, contains water logged blocks
@@ -30,6 +34,21 @@ interface WorldIdentifier {
      * @return true when the block is bounce-able (etc. Slime Block)
      */
     fun isBlockBounceable(block: Block): Boolean
+
+    /**
+     * @return true when the block is able to give player slowdown effect (etc. SoulSand, HoneyBlock)
+     */
+    fun isVelocityBlock(block: Block): Boolean
+
+    /**
+     * @return true when block is web
+     */
+    fun isWeb(block: Block): Boolean
+
+    /**
+     * @return 0 when block is not bubble, 1 when bubble up, -1 when bubble down
+     */
+    fun getBubbleStat(block: Block): Int
 
     /**
      * https://www.mcpk.wiki/w/index.php?title=Slipperiness

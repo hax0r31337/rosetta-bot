@@ -18,8 +18,13 @@ open class PhysicsSetting {
     open val airborneInertia = 0.91f
     open val ladderMaxSpeed = 0.15f
     open val ladderClimbSpeed = 0.2f
-    open val airDrag = 1 - 0.02f
+    open val airDrag = 1f - 0.02f
     open val stepHeight = 0.6
+    open val velocityBlockSpeed = 0.4f
+    open val bubbleColumnSurfaceDrag = BubbleDrag(0.03f, -0.9f, 0.1f, 1.8f)
+    open val bubbleColumnDrag = BubbleDrag(0.03f, -0.3f, 0.06f, 0.7f)
+
+    class BubbleDrag(val down: Float, val maxDown: Float, val up: Float, val maxUp: Float)
 
     companion object {
         val INSTANCE = PhysicsSetting()

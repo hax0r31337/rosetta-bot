@@ -84,10 +84,6 @@ class EntityClientPlayer : EntityPlayer() {
      * only available when calling [applyMotionCollides]
      */
     var isCollidedVertically = false
-    /**
-     * only available when calling [applyMotionCollides]
-     */
-    var isInWeb = false
 
     /**
      * @param identifier you can not pass it, but some feature will disabled
@@ -96,13 +92,6 @@ class EntityClientPlayer : EntityPlayer() {
         var dx = motion.x.toDouble()
         var dy = motion.y.toDouble()
         var dz = motion.z.toDouble()
-        if(isInWeb) {
-            dx *= 0.25
-            dy *= 0.05
-            dz *= 0.25
-            motion.set(0f, 0f, 0f)
-            isInWeb = false
-        }
 
         var oldVelX = dx
         var oldVelY = dy
@@ -148,6 +137,7 @@ class EntityClientPlayer : EntityPlayer() {
 
         // step on block if height < stepHeight
         if (settings.stepHeight > 0f && (onGround || (dy != oldVelY && oldVelY < 0)) || (dx != oldVelX || dz != oldVelZ)) {
+            // TODO: fix bugs that will cause anticheat detection
             val oldVelXCol = dx
             val oldVelYCol = dy
             val oldVelZCol = dz

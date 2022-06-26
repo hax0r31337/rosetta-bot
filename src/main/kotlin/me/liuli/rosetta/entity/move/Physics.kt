@@ -20,6 +20,8 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         private set
     var isInLava = false
         private set
+    var isInWeb = false
+        private set
     var jumpTicks = 0
         private set
 
@@ -62,6 +64,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
                 if (jumpBoost > 0) {
                     motion.y += 0.1f * jumpBoost
                 }
+                bot.protocol.jump()
                 if (bot.player.sprinting) {
                     val yaw = Math.toRadians(bot.player.rotation.x.toDouble())
                     motion.x -= sin(yaw).toFloat() * 0.2f
@@ -111,7 +114,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         }
 
         applyHeading(strafe, forward, acceleration)
-        bot.player.applyMotionCollides(bot.world, settings, identifier)
+        movePlayer()
 
         motion.y *= inertia
         motion.y -= (if(isInWater) settings.waterGravity else settings.lavaGravity) *
@@ -135,6 +138,48 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         }
     }
 
+    private fun movePlayer() {
+        val motion = bot.player.motion
+
+        if(isInWeb) {
+            motion.x *= 0.25f
+            motion.y *= 0.25f
+            motion.z *= 0.25f
+        }
+        bot.player.applyMotionCollides(bot.world, settings, identifier)
+        if (isInWeb) {
+            motion.set(0f, 0f, 0f)
+        }
+
+        val bb = bot.player.axisAlignedBB.apply { contract(0.001, 0.001, 0.001) }
+        bot.world.getSurroundingBlocks(bb) { block, x, y, z ->
+            if (identifier.velocityBlocksOnCollision && identifier.isVelocityBlock(block)) {
+                motion.x *= settings.velocityBlockSpeed
+                motion.z *= settings.velocityBlockSpeed
+            }
+            isInWeb = identifier.isWeb(block)
+            val bubble = identifier.getBubbleStat(block)
+            if (bubble != 0) {
+                val aboveBlock = bot.world.getBlockAt(x, y - 1, z)
+                val drag = if(aboveBlock == null || aboveBlock.id == Block.AIR.id) settings.bubbleColumnSurfaceDrag else settings.bubbleColumnDrag
+                if (bubble == -1) {
+                    motion.y = (motion.y - drag.down).coerceAtLeast(drag.maxDown)
+                } else {
+                    motion.y = (motion.y + drag.up).coerceAtMost(drag.maxUp)
+                }
+            }
+            false
+        }
+
+        if (!identifier.velocityBlocksOnCollision) {
+            val blockUnder = bot.world.getBlockAt(bot.player.position.x.toInt(), (bot.player.position.y - 0.5).toInt(), bot.player.position.z.toInt())
+            if (blockUnder != null && identifier.isVelocityBlock(blockUnder)) {
+                motion.x *= settings.velocityBlockSpeed
+                motion.z *= settings.velocityBlockSpeed
+            }
+        }
+    }
+
     private fun moveInAir(strafe: Float, forward: Float) {
         val motion = bot.player.motion
         val position = bot.player.position
@@ -153,10 +198,10 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         if (identifier.isClimbable(bot.world.getBlockAt(position.x.toInt(), position.y.toInt(), position.z.toInt()) ?: Block.AIR)) {
             motion.x = motion.x.coerceIn(-settings.ladderMaxSpeed, settings.ladderMaxSpeed)
             motion.z = motion.z.coerceIn(-settings.ladderMaxSpeed, settings.ladderMaxSpeed)
-            motion.y = motion.y.coerceAtMost(if (bot.player.sneaking) 0f else -settings.ladderMaxSpeed)
+            motion.y = motion.y.coerceAtLeast(if (bot.player.sneaking) 0f else -settings.ladderMaxSpeed)
         }
 
-        bot.player.applyMotionCollides(bot.world, settings, identifier)
+        movePlayer()
 
         // refresh isOnClimbableBlock cuz position changed
         if (identifier.isClimbable(bot.world.getBlockAt(position.x.toInt(), position.y.toInt(), position.z.toInt()) ?: Block.AIR)
@@ -180,7 +225,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
     private fun applyHeading(strafe: Float, forward: Float, multiplier: Float) {
         var speed = sqrt(strafe * strafe + forward * forward)
         if (speed < 0.01) return
-        speed = multiplier / speed.coerceAtMost(1f)
+        speed = multiplier / speed.coerceAtLeast(1f)
 
         val strafe = strafe * speed
         val forward = forward * speed

@@ -137,6 +137,7 @@ class AdaptProtocol : MinecraftProtocol {
         val xDiff = x - lastX
         val yDiff = y - lastY
         val zDiff = z - lastZ
+        this.positionUpdateTicks++
         val moved = (xDiff * xDiff + yDiff * yDiff + zDiff * zDiff) > 9.0E-4 || this.positionUpdateTicks >= 20
         val rotated = (yaw - lastYaw) != 0f || (pitch - lastPitch) != 0f
 
@@ -150,8 +151,6 @@ class AdaptProtocol : MinecraftProtocol {
         } else if (lastOnGround != onGround) {
             client.session.send(ClientPlayerMovementPacket(onGround))
         }
-
-        this.positionUpdateTicks++
 
         if (moved) {
             this.lastX = x
@@ -243,6 +242,9 @@ class AdaptProtocol : MinecraftProtocol {
 
     override fun closeWindow(id: Int) {
         client.session.send(ClientCloseWindowPacket(id))
+    }
+
+    override fun jump() {
     }
 
     override fun chat(message: String) {

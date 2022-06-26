@@ -56,19 +56,21 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
         world.tick()
 
         // update player
+        if (player.health <= 0 && player.isAlive) {
+            player.isAlive = false
+            emit(DeathEvent())
+        } else if (player.health > 0 && !player.isAlive) {
+            player.isAlive = true
+        }
+
         val event = PreMotionEvent()
+        if (!player.isAlive) event.isCancelled = true
         emit(event)
         if (event.isCancelled) return
 
         if (player.needAbilitiesUpdate) {
             protocol.abilities(player.invincible, player.flying, player.canFly, player.baseWalkSpeed, player.baseFlySpeed)
             player.needAbilitiesUpdate = false
-        }
-        if (player.health <= 0 && player.isAlive) {
-            player.isAlive = false
-            emit(DeathEvent())
-        } else if (player.health > 0 && !player.isAlive) {
-            player.isAlive = true
         }
         if (lastSlot != player.heldItemSlot) {
             protocol.heldItemChange(player.heldItemSlot)

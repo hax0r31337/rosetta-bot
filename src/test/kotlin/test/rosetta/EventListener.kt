@@ -38,9 +38,12 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
 //        println("${event.type} ${event.message}")
 //    }
 
+    private var last = .0
+
     @Listen
     fun onPreMotion(event: PreMotionEvent) {
-//        println(bot.player.rotation.x)
+//        println(bot.player.position.y - last)
+//        last = bot.player.position.y
     }
 
 //    @Listen

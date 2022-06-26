@@ -9,6 +9,9 @@ class AdaptWorldIdentifier : WorldIdentifier {
 
     override val climbUsingJump = false
 
+    override val velocityBlocksOnCollision: Boolean
+        get() = true
+
     override fun getWaterDepth(block: Block): Int {
         return if(block.name == "water") {
             block.id and 0xF
@@ -25,6 +28,16 @@ class AdaptWorldIdentifier : WorldIdentifier {
     override fun isBlockBounceable(block: Block): Boolean {
         return block.name == "slime"
     }
+
+    override fun isVelocityBlock(block: Block): Boolean {
+        return block.name == "soul_sand"
+    }
+
+    override fun isWeb(block: Block): Boolean {
+        return block.name == "web"
+    }
+
+    override fun getBubbleStat(block: Block) = 0 // Not yet implemented in 1.12
 
     override fun jumpBoostLevel(entity: EntityLiving): Int {
         return (entity.effects.firstOrNull { it.name == "jump_boost" } ?: return 0).amplifier
