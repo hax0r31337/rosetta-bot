@@ -26,6 +26,7 @@ object Main {
     private fun joinServer() {
         val proto = AdaptProtocol() // create a protocol instance to communicate with the server
         val bot = MinecraftBot(MinecraftAccount.offline("RosettaBot"), proto) // create a bot instance with the account and protocol
+//        bot.tickDelay = 200
 
 //        bot.registerListener(FuncListener(DisconnectEvent::class.java) {
 //            println("Disconnected: ${it.reason}")

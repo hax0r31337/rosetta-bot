@@ -136,7 +136,7 @@ class EntityClientPlayer : EntityPlayer() {
         playerBB.offset(.0, .0, dz)
 
         // step on block if height < stepHeight
-        if (settings.stepHeight > 0f && (onGround || (dy != oldVelY && oldVelY < 0)) || (dx != oldVelX || dz != oldVelZ)) {
+        if (settings.stepHeight > 0f && (onGround || (dy != oldVelY && oldVelY < 0)) && (dx != oldVelX || dz != oldVelZ)) {
             // TODO: fix bugs that will cause anticheat detection
             val oldVelXCol = dx
             val oldVelYCol = dy

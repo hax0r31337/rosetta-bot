@@ -272,7 +272,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
     }
 
     private fun applyWaterFlow() {
-        val waterBB = bot.player.axisAlignedBB.apply { maxY -= 0.4 }
+        val waterBB = bot.player.axisAlignedBB.apply { contract(0.001, 0.101, 0.001) }
         val waterCollides = bot.world.getSurroundingBlocks(waterBB) { it, _, y, _ ->
             val depth = identifier.getWaterDepth(it)
             if (depth == -1) {
