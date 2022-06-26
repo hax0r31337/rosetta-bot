@@ -127,7 +127,7 @@ class EntityClientPlayer : EntityPlayer() {
         }
 
         var playerBB = this.axisAlignedBB
-        val queryBB = playerBB.copy().apply { extend(dx, dy, dz) }
+        val queryBB = playerBB.copy().apply { addCoord(dx, dy, dz) }
         val surroundingBBs = world.getSurroundingBBs(queryBB)
         val oldBB = playerBB.copy()
 
@@ -137,29 +137,29 @@ class EntityClientPlayer : EntityPlayer() {
         playerBB.offset(.0, dy, .0)
 
         for (blockBB in surroundingBBs) {
-            dx = blockBB.computeOffsetY(playerBB, dx)
+            dx = blockBB.computeOffsetX(playerBB, dx)
         }
         playerBB.offset(dx, .0, .0)
 
         for (blockBB in surroundingBBs) {
-            dz = blockBB.computeOffsetY(playerBB, dz)
+            dz = blockBB.computeOffsetZ(playerBB, dz)
         }
         playerBB.offset(.0, .0, dz)
 
         // step on block if height < stepHeight
-        if ((onGround || (dy != oldVelY && oldVelY < 0)) || (dx != oldVelX || dz != oldVelZ)) {
+        if (settings.stepHeight > 0f && (onGround || (dy != oldVelY && oldVelY < 0)) || (dx != oldVelX || dz != oldVelZ)) {
             val oldVelXCol = dx
             val oldVelYCol = dy
             val oldVelZCol = dz
             val oldBBCol = playerBB.copy()
 
             dy = settings.stepHeight
-            val queryBB = oldBB.copy().apply { extend(oldVelX, dy, oldVelZ) }
+            val queryBB = oldBB.copy().apply { addCoord(oldVelX, dy, oldVelZ) }
             val surroundingBBs = world.getSurroundingBBs(queryBB)
 
             val bb1 = oldBB.copy()
             val bb2 = oldBB.copy()
-            val bbXZ = oldBB.copy().apply { extend(dx, .0, dz) }
+            val bbXZ = oldBB.copy().apply { addCoord(dx, .0, dz) }
 
             var dy1 = dy
             var dy2 = dy
@@ -204,7 +204,7 @@ class EntityClientPlayer : EntityPlayer() {
             }
 
             for(blockBB in surroundingBBs) {
-                dy1 = blockBB.computeOffsetY(playerBB, dy1)
+                dy = blockBB.computeOffsetY(playerBB, dy)
             }
             playerBB.offset(.0, dy, .0)
 

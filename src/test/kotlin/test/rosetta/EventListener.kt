@@ -27,6 +27,9 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
         } else if (event.message.contains("sneak")) {
             bot.player.sneaking = !bot.player.sneaking
             bot.chat("MOVE_SN ${bot.player.sneaking}")
+        } else if (event.message.contains("sprint")) {
+            bot.player.sprinting = !bot.player.sprinting
+            bot.chat("MOVE_SP ${bot.player.sprinting}")
         }
     }
 
@@ -37,6 +40,7 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
     @Listen
     fun onPreMotion(event: PreMotionEvent) {
+//        println(bot.player.rotation.x)
     }
 
 //    @Listen

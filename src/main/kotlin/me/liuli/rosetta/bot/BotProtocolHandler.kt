@@ -48,7 +48,6 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         if (event.isCancelled) {
             return false
         }
-        println("FLAG")
         val player = bot.player
         player.motion.set(0f, 0f, 0f)
         player.position.set(event.x, event.y, event.z)

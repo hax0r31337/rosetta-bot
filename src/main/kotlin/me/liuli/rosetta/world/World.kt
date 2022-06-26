@@ -78,16 +78,16 @@ class World {
     }
 
     fun getSurroundingBBs(queryBB: AxisAlignedBB): List<AxisAlignedBB> {
-        return getSurroundingBBs(queryBB) { true }
+        return getSurroundingBBs(queryBB) { _, _, _, _ -> true }
     }
 
-    fun getSurroundingBBs(queryBB: AxisAlignedBB, blockOk: (Block) -> Boolean): List<AxisAlignedBB> {
+    fun getSurroundingBBs(queryBB: AxisAlignedBB, blockOk: (Block, Int, Int, Int) -> Boolean): List<AxisAlignedBB> {
         val list = mutableListOf<AxisAlignedBB>()
 
         for (y in (queryBB.minY - 1).toInt()..(queryBB.maxY).toInt()) {
             for (x in queryBB.minX.toInt()..queryBB.maxX.toInt()) {
                 for (z in queryBB.minZ.toInt()..queryBB.maxZ.toInt()) {
-                    val shape = getBlockAt(x, y, z)?.let { if(blockOk(it)) it else null }?.shape
+                    val shape = getBlockAt(x, y, z)?.let { if(blockOk(it, x, y, z)) it else null }?.shape
                     if (shape is ComplexShape) {
                         for (subshape in shape.shapes) {
                             list.add(AxisAlignedBB(x.toDouble(), y.toDouble(), z.toDouble(), subshape))
@@ -103,17 +103,17 @@ class World {
     }
 
     fun getSurroundingBlocks(queryBB: AxisAlignedBB): List<Vec3i> {
-        return getSurroundingBlocks(queryBB) { true }
+        return getSurroundingBlocks(queryBB) { _, _, _, _ -> true }
     }
 
-    fun getSurroundingBlocks(queryBB: AxisAlignedBB, blockOk: (Block) -> Boolean): List<Vec3i> {
+    fun getSurroundingBlocks(queryBB: AxisAlignedBB, blockOk: (Block, Int, Int, Int) -> Boolean): List<Vec3i> {
         val list = mutableListOf<Vec3i>()
 
         for (y in (queryBB.minY - 1).toInt()..(queryBB.maxY).toInt()) {
             for (x in queryBB.minX.toInt()..queryBB.maxX.toInt()) {
                 for (z in queryBB.minZ.toInt()..queryBB.maxZ.toInt()) {
                     getBlockAt(x, y, z)?.also {
-                        if (blockOk(it)) {
+                        if (blockOk(it, x, y, z)) {
                             list.add(Vec3i(x, y, z))
                         }
                     }

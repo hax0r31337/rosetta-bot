@@ -23,7 +23,7 @@ data class AxisAlignedBB(open var minX: Double, open var minY: Double, open var 
         this.maxZ = floor(this.maxZ)
     }
 
-    fun extend(x: Double, y: Double, z: Double) {
+    fun addCoord(x: Double, y: Double, z: Double) {
         if (x < 0) this.minX += x
         else this.maxX += x
 

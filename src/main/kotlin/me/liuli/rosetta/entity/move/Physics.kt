@@ -37,9 +37,9 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         if (!bot.isConnected || bot.world.getChunkAt(bot.player.position.x.toInt() shr 4, bot.player.position.z.toInt() shr 4) == null) {
             return
         }
-
         applyWaterFlow()
-        isInLava = bot.world.getSurroundingBlocks(bot.player.axisAlignedBB.apply { contract(0.1, 0.4, 0.1) }) {
+        val lavaBB = bot.player.axisAlignedBB.apply { contract(0.1, 0.4, 0.1) }
+        isInLava = bot.world.getSurroundingBlocks(lavaBB) { it, _, _, _ ->
             identifier.isLava(it)
         }.isNotEmpty()
 
@@ -63,7 +63,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
                     motion.y += 0.1f * jumpBoost
                 }
                 if (bot.player.sprinting) {
-                    val yaw = PI - bot.player.rotation.x
+                    val yaw = Math.toRadians(bot.player.rotation.x.toDouble())
                     motion.x -= sin(yaw).toFloat() * 0.2f
                     motion.z += cos(yaw).toFloat() * 0.2f
                 }
@@ -121,8 +121,15 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
 
         if (bot.player.isCollidedHorizontally) {
             val bb = AxisAlignedBB(position.x + motion.x, lastY + motion.y + 0.6, position.z + motion.z, bot.player.shape)
-            if(!bot.world.getSurroundingBBs(bb).any { it.intersects(bb) }
-                && bot.world.getSurroundingBlocks(bb){ identifier.getWaterDepth(it) != -1 }.isNotEmpty()) {
+            if(!bot.world.getSurroundingBBs(bb).any { it.intersects(bb) } && bot.world.getSurroundingBlocks(bb) { it, _, y, _ ->
+                    val depth = identifier.getWaterDepth(it)
+                    if (depth == -1) {
+                        false
+                    } else {
+                        val level = y + 1 - ((depth + 1) / 9f)
+                        level in bb.minY..bb.maxY
+                    }
+                }.isNotEmpty()) {
                 motion.y = settings.outOfLiquidImpulse
             }
         }
@@ -173,18 +180,17 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
     private fun applyHeading(strafe: Float, forward: Float, multiplier: Float) {
         var speed = sqrt(strafe * strafe + forward * forward)
         if (speed < 0.01) return
-
         speed = multiplier / speed.coerceAtMost(1f)
 
         val strafe = strafe * speed
         val forward = forward * speed
 
-        val yaw = PI / bot.player.rotation.x
+        val yaw = Math.toRadians(bot.player.rotation.x.toDouble())
         val sinYaw = sin(yaw).toFloat()
         val cosYaw = cos(yaw).toFloat()
 
-        bot.player.motion.x *= strafe * cosYaw - forward * sinYaw
-        bot.player.motion.z *= forward * cosYaw + strafe * sinYaw
+        bot.player.motion.x += strafe * cosYaw - forward * sinYaw
+        bot.player.motion.z += forward * cosYaw + strafe * sinYaw
     }
 
     private fun getFlow(x: Int, y: Int, z: Int): Vec3f {
@@ -221,8 +227,15 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
     }
 
     private fun applyWaterFlow() {
-        val waterCollides = bot.world.getSurroundingBlocks(bot.player.axisAlignedBB.apply { contract(0.001, 0.401, 0.001) }) {
-            identifier.getWaterDepth(it) != -1
+        val waterBB = bot.player.axisAlignedBB.apply { maxY -= 0.4 }
+        val waterCollides = bot.world.getSurroundingBlocks(waterBB) { it, _, y, _ ->
+            val depth = identifier.getWaterDepth(it)
+            if (depth == -1) {
+                false
+            } else {
+                val level = y + 1 - ((depth + 1) / 9f)
+                level in waterBB.minY..waterBB.maxY
+            }
         }
         isInWater = waterCollides.isNotEmpty()
         if (!isInWater) {
