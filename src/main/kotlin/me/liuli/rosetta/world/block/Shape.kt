@@ -1,7 +1,5 @@
 package me.liuli.rosetta.world.block
 
-import me.liuli.rosetta.util.vec.Vec3d
-
 open class Shape(open var minX: Double, open var minY: Double, open var minZ: Double,
                  open var maxX: Double, open var maxY: Double, open var maxZ: Double) {
 

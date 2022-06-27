@@ -44,7 +44,6 @@ import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerU
 import com.github.steveice10.mc.protocol.packet.ingame.server.window.*
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.*
 import com.github.steveice10.packetlib.Client
-import com.google.gson.Gson
 import me.liuli.rosetta.bot.BotProtocolHandler
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
@@ -97,7 +96,7 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
                 handler.spawnEntity(entity)
             }
             is ServerEntityVelocityPacket -> {
-                handler.onSetMotion(pk.entityId, pk.motionX.toFloat(), pk.motionY.toFloat(), pk.motionZ.toFloat())
+                handler.onSetMotion(pk.entityId, pk.motionX, pk.motionY, pk.motionZ)
             }
             is ServerEntityMetadataPacket -> {
                 handleMetadata(pk.entityId, pk.metadata)

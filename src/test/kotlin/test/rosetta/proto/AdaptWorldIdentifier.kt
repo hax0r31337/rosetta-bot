@@ -1,6 +1,5 @@
 package test.rosetta.proto
 
-import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.world.WorldIdentifier
 import me.liuli.rosetta.world.block.Block

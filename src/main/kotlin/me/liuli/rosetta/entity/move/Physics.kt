@@ -4,6 +4,7 @@ import me.liuli.rosetta.bot.MinecraftBot
 import me.liuli.rosetta.bot.event.FuncListener
 import me.liuli.rosetta.bot.event.PreMotionEvent
 import me.liuli.rosetta.util.vec.Vec3f
+import me.liuli.rosetta.util.vec.Vec3i
 import me.liuli.rosetta.world.WorldIdentifier
 import me.liuli.rosetta.world.block.AxisAlignedBB
 import me.liuli.rosetta.world.block.Block
@@ -49,26 +50,26 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         val position = bot.player.position
 
         // Reset velocity component if it falls under the threshold
-        if (abs(motion.x) < settings.negligibleVelocity) motion.x = 0f
-        if (abs(motion.y) < settings.negligibleVelocity) motion.y = 0f
-        if (abs(motion.z) < settings.negligibleVelocity) motion.z = 0f
+        if (abs(motion.x) < settings.negligibleVelocity) motion.x = .0
+        if (abs(motion.y) < settings.negligibleVelocity) motion.y = .0
+        if (abs(motion.z) < settings.negligibleVelocity) motion.z = .0
 
         if (bot.controller.jump) {
             if (jumpTicks > 0) jumpTicks--
             if (isInWater || isInLava) {
-                motion.y += 0.04f
+                motion.y += 0.04
             } else if(bot.player.onGround && jumpTicks == 0) {
                 val blockBelow = bot.world.getBlockAt(position.x.toInt(), position.y.toInt() - 1, position.z.toInt())
-                motion.y = 0.42f * (if(blockBelow?.let { identifier.isHoneyBlock(it) } == true) settings.honeyJumpMultiplier else 1f)
+                motion.y = 0.42f * (if(blockBelow?.let { identifier.isHoneyBlock(it) } == true) settings.honeyJumpMultiplier else 1.0)
                 val jumpBoost = identifier.jumpBoostLevel(bot.player)
                 if (jumpBoost > 0) {
-                    motion.y += 0.1f * jumpBoost
+                    motion.y += 0.1 * jumpBoost
                 }
                 bot.protocol.jump()
                 if (bot.player.sprinting) {
                     val yaw = Math.toRadians(bot.player.rotation.x.toDouble())
-                    motion.x -= sin(yaw).toFloat() * 0.2f
-                    motion.z += cos(yaw).toFloat() * 0.2f
+                    motion.x -= sin(yaw).toFloat() * 0.2
+                    motion.z += cos(yaw).toFloat() * 0.2
                 }
                 jumpTicks = settings.autojumpCooldown
             }
@@ -76,8 +77,8 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
             jumpTicks = 0
         }
 
-        var strafe = bot.controller.strafeValue * 0.98f
-        var forward = bot.controller.forwardValue * 0.98f
+        var strafe = bot.controller.strafeValue * 0.98
+        var forward = bot.controller.forwardValue * 0.98
 
         if (bot.player.sneaking) {
             strafe *= settings.sneakSpeedMultiplier
@@ -92,7 +93,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         }
     }
 
-    private fun moveInWater(strafe: Float, forward: Float) {
+    private fun moveInWater(strafe: Double, forward: Double) {
         val motion = bot.player.motion
         val position = bot.player.position
 
@@ -102,14 +103,14 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         var horizontalInertia = inertia
 
         if (isInWater) {
-            var strider = identifier.depthStriderEnchantLevel(bot.player).toFloat()
+            var strider = identifier.depthStriderEnchantLevel(bot.player).toDouble()
             if (!bot.player.onGround) {
-                strider *= 0.5f
+                strider *= 0.5
             }
             if (strider > 0) {
-                horizontalInertia += (0.546f - horizontalInertia) * strider / 3
-                acceleration *= (0.7f - acceleration) * strider / 3
-                if (identifier.dolphinsGraceLevel(bot.player) > 0) horizontalInertia = 0.96f
+                horizontalInertia += (0.546 - horizontalInertia) * strider / 3
+                acceleration *= (0.7 - acceleration) * strider / 3
+                if (identifier.dolphinsGraceLevel(bot.player) > 0) horizontalInertia = 0.96
             }
         }
 
@@ -118,21 +119,13 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
 
         motion.y *= inertia
         motion.y -= (if(isInWater) settings.waterGravity else settings.lavaGravity) *
-                (if(motion.y <= 0 && identifier.slowFallingLevel(bot.player) > 0) settings.slowFallingMultiplier else 1f)
+                (if(motion.y <= 0 && identifier.slowFallingLevel(bot.player) > 0) settings.slowFallingMultiplier else .1)
         motion.x *= horizontalInertia
         motion.z *= horizontalInertia
 
         if (bot.player.isCollidedHorizontally) {
             val bb = AxisAlignedBB(position.x + motion.x, lastY + motion.y + 0.6, position.z + motion.z, bot.player.shape)
-            if(!bot.world.getSurroundingBBs(bb).any { it.intersects(bb) } && bot.world.getSurroundingBlocks(bb) { it, _, y, _ ->
-                    val depth = identifier.getWaterDepth(it)
-                    if (depth == -1) {
-                        false
-                    } else {
-                        val level = y + 1 - ((depth + 1) / 9f)
-                        level in bb.minY..bb.maxY
-                    }
-                }.isNotEmpty()) {
+            if(!bot.world.getSurroundingBBs(bb).any { it.intersects(bb) } && getWaterInBB(bb).isNotEmpty()) {
                 motion.y = settings.outOfLiquidImpulse
             }
         }
@@ -142,13 +135,13 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         val motion = bot.player.motion
 
         if(isInWeb) {
-            motion.x *= 0.25f
-            motion.y *= 0.25f
-            motion.z *= 0.25f
+            motion.x *= 0.25
+            motion.y *= 0.25
+            motion.z *= 0.25
         }
         bot.player.applyMotionCollides(bot.world, settings, identifier)
         if (isInWeb) {
-            motion.set(0f, 0f, 0f)
+            motion.set(.0, .0, .0)
         }
 
         val bb = bot.player.axisAlignedBB.apply { contract(0.001, 0.001, 0.001) }
@@ -180,7 +173,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         }
     }
 
-    private fun moveInAir(strafe: Float, forward: Float) {
+    private fun moveInAir(strafe: Double, forward: Double) {
         val motion = bot.player.motion
         val position = bot.player.position
 
@@ -190,7 +183,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
 
         if (bot.player.onGround) {
             inertia *= identifier.getSlipperiness(blockUnder)
-            acceleration = (bot.player.walkSpeed * 0.1627714f / inertia.pow(3)).coerceAtLeast(0f) // acceleration should not be negative
+            acceleration = (bot.player.walkSpeed * 0.1627714 / inertia.pow(3)).coerceAtLeast(.0) // acceleration should not be negative
         }
 
         applyHeading(strafe, forward, acceleration)
@@ -198,7 +191,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         if (identifier.isClimbable(bot.world.getBlockAt(position.x.toInt(), position.y.toInt(), position.z.toInt()) ?: Block.AIR)) {
             motion.x = motion.x.coerceIn(-settings.ladderMaxSpeed, settings.ladderMaxSpeed)
             motion.z = motion.z.coerceIn(-settings.ladderMaxSpeed, settings.ladderMaxSpeed)
-            motion.y = motion.y.coerceAtLeast(if (bot.player.sneaking) 0f else -settings.ladderMaxSpeed)
+            motion.y = motion.y.coerceAtLeast(if (bot.player.sneaking) .0 else -settings.ladderMaxSpeed)
         }
 
         movePlayer()
@@ -212,20 +205,20 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         // apply friction and gravity
         val levitation = identifier.levitationLevel(bot.player)
         if (levitation > 0) {
-            motion.y += (0.05f * levitation - motion.y) * 0.2f
+            motion.y += (0.05 * levitation - motion.y) * 0.2
         } else {
             motion.y -= settings.gravity *
-                    (if(motion.y <= 0 && identifier.slowFallingLevel(bot.player) > 0) settings.slowFallingMultiplier else 1f)
+                    (if(motion.y <= 0 && identifier.slowFallingLevel(bot.player) > 0) settings.slowFallingMultiplier else 1.0)
         }
         motion.x *= inertia
         motion.z *= inertia
         motion.y *= settings.airDrag
     }
 
-    private fun applyHeading(strafe: Float, forward: Float, multiplier: Float) {
+    private fun applyHeading(strafe: Double, forward: Double, multiplier: Double) {
         var speed = sqrt(strafe * strafe + forward * forward)
         if (speed < 0.01) return
-        speed = multiplier / speed.coerceAtLeast(1f)
+        speed = multiplier / speed.coerceAtLeast(1.0)
 
         val strafe = strafe * speed
         val forward = forward * speed
@@ -272,16 +265,8 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
     }
 
     private fun applyWaterFlow() {
-        val waterBB = bot.player.axisAlignedBB.apply { contract(0.001, 0.101, 0.001) }
-        val waterCollides = bot.world.getSurroundingBlocks(waterBB) { it, _, y, _ ->
-            val depth = identifier.getWaterDepth(it)
-            if (depth == -1) {
-                false
-            } else {
-                val level = y + 1 - ((depth + 1) / 9f)
-                level in waterBB.minY..waterBB.maxY
-            }
-        }
+        val waterBB = bot.player.axisAlignedBB.apply { contract(0.001, 0.401, 0.001) }
+        val waterCollides = getWaterInBB(waterBB)
         isInWater = waterCollides.isNotEmpty()
         if (!isInWater) {
             return
@@ -299,5 +284,21 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
         bot.player.motion.x += acceleration.x * 0.014f
         bot.player.motion.y += acceleration.y * 0.014f
         bot.player.motion.z += acceleration.z * 0.014f
+    }
+
+    private fun getWaterInBB(waterBB: AxisAlignedBB): List<Vec3i> {
+        val minY = waterBB.minY.toInt()
+        val maxY = ceil(waterBB.maxY)
+        return bot.world.getSurroundingBlocks(waterBB) { it, _, y, _ ->
+            if (y < minY) return@getSurroundingBlocks false
+
+            val depth = identifier.getWaterDepth(it)
+            if (depth == -1) {
+                false
+            } else {
+                val level = y + 1 - ((depth + 1) / 9f)
+                maxY >= level
+            }
+        }
     }
 }

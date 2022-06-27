@@ -49,7 +49,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
             return false
         }
         val player = bot.player
-        player.motion.set(0f, 0f, 0f)
+        player.motion.set(.0, .0, .0)
         player.position.set(event.x, event.y, event.z)
         player.rotation.set(event.yaw, event.pitch)
         player.isSpawned = true
@@ -117,7 +117,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         bot.world.entities[instance.id] = instance
     }
 
-    fun onSetMotion(entityId: Int, motionX: Float, motionY: Float, motionZ: Float) {
+    fun onSetMotion(entityId: Int, motionX: Double, motionY: Double, motionZ: Double) {
         if (entityId == bot.player.id) {
             bot.player.motion.set(motionX, motionY, motionZ)
         }

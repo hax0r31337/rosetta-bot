@@ -6,7 +6,7 @@ import com.github.steveice10.mc.protocol.data.game.entity.attribute.ModifierType
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.client.EntityClientPlayer
 import me.liuli.rosetta.entity.move.IMoveSpeedModifier
-import java.util.UUID
+import java.util.*
 
 class MoveModifier(val uuid: UUID, val amount: Float, val type: ModifierType, val operation: ModifierOperation) : IMoveSpeedModifier {
 

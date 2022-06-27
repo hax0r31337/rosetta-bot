@@ -16,7 +16,6 @@ import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientClose
 import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientWindowActionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientSteerVehiclePacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientUpdateSignPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientVehicleMovePacket
 import com.github.steveice10.packetlib.Client
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent
 import com.github.steveice10.packetlib.event.session.PacketReceivedEvent

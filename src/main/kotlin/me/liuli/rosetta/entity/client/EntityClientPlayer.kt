@@ -5,14 +5,14 @@ import me.liuli.rosetta.entity.inventory.PlayerInventory
 import me.liuli.rosetta.entity.inventory.Window
 import me.liuli.rosetta.entity.move.IMoveSpeedModifier
 import me.liuli.rosetta.entity.move.PhysicsSetting
-import me.liuli.rosetta.util.vec.Vec3f
+import me.liuli.rosetta.util.vec.Vec3d
 import me.liuli.rosetta.world.World
 import me.liuli.rosetta.world.WorldIdentifier
 
 class EntityClientPlayer : EntityPlayer() {
 
     override val type = "client"
-    val motion = Vec3f()
+    val motion = Vec3d()
     var onGround = false
 
     // abilities
@@ -86,12 +86,12 @@ class EntityClientPlayer : EntityPlayer() {
     var isCollidedVertically = false
 
     /**
-     * @param identifier you can not pass it, but some feature will disabled
+     * @param identifier you can not pass it, but some feature will be disabled
      */
     open fun applyMotionCollides(world: World, settings: PhysicsSetting, identifier: WorldIdentifier? = null) {
-        var dx = motion.x.toDouble()
-        var dy = motion.y.toDouble()
-        var dz = motion.z.toDouble()
+        var dx = motion.x
+        var dy = motion.y
+        var dz = motion.z
 
         var oldVelX = dx
         var oldVelY = dy
@@ -137,7 +137,6 @@ class EntityClientPlayer : EntityPlayer() {
 
         // step on block if height < stepHeight
         if (settings.stepHeight > 0f && (onGround || (dy != oldVelY && oldVelY < 0)) && (dx != oldVelX || dz != oldVelZ)) {
-            // TODO: fix bugs that will cause anticheat detection
             val oldVelXCol = dx
             val oldVelYCol = dy
             val oldVelZCol = dz
@@ -214,18 +213,18 @@ class EntityClientPlayer : EntityPlayer() {
         this.isCollidedVertically = dy != oldVelY
         this.onGround = this.isCollidedVertically && oldVelY < 0
 
-        if (dx != oldVelX) motion.x = 0f
-        if (dz != oldVelZ) motion.z = 0f
+        if (dx != oldVelX) motion.x = .0
+        if (dz != oldVelZ) motion.z = .0
         if (dy != oldVelY) {
             if (identifier != null) {
                 val blockAtFeet = world.getBlockAt(position.x.toInt(), (position.y - 0.2).toInt(), position.z.toInt())
                 if (blockAtFeet != null && identifier.isBlockBounceable(blockAtFeet) && !sneaking) {
                     motion.y = -motion.y
                 } else {
-                    motion.y = 0f
+                    motion.y = .0
                 }
             } else {
-                motion.y = 0f
+                motion.y = .0
             }
         }
     }
