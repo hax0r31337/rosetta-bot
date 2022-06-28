@@ -119,7 +119,7 @@ class Physics(val bot: MinecraftBot, val identifier: WorldIdentifier, val settin
 
         motion.y *= inertia
         motion.y -= (if(isInWater) settings.waterGravity else settings.lavaGravity) *
-                (if(motion.y <= 0 && identifier.slowFallingLevel(bot.player) > 0) settings.slowFallingMultiplier else .1)
+                (if(motion.y <= 0 && identifier.slowFallingLevel(bot.player) > 0) settings.slowFallingMultiplier else 1.0)
         motion.x *= horizontalInertia
         motion.z *= horizontalInertia
 

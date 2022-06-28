@@ -12,6 +12,7 @@ version = "1.0.0"
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
+    maven("https://libraries.minecraft.net/")
 }
 
 dependencies {
@@ -20,6 +21,7 @@ dependencies {
 
     testImplementation("com.github.liulihaocai:MCProtocolLib:e0af4caff6")
     testImplementation("com.github.GeyserMC:OpenNBT:1.0")
+    testImplementation("com.github.Kawa1Ares:Elixir:1.2.5")
 }
 
 tasks {
