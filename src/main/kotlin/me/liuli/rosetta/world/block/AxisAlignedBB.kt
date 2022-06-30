@@ -71,6 +71,14 @@ data class AxisAlignedBB(open var minX: Double, open var minY: Double, open var 
                 this.maxY > other.minY && this.minZ < other.maxZ && this.maxZ > other.minZ
     }
 
+    fun intersectsXZ(other: AxisAlignedBB): Boolean {
+        return this.minX < other.maxX && this.maxX > other.minX && this.minZ < other.maxZ && this.maxZ > other.minZ
+    }
+
+    fun intersectsY(other: AxisAlignedBB): Boolean {
+        return this.minY < other.maxY && this.maxY > other.minY
+    }
+
     fun computeOffsetX(other: AxisAlignedBB, offsetXIn: Double): Double {
         var offsetX = offsetXIn
 

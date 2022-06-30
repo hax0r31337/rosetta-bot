@@ -6,7 +6,9 @@ import me.liuli.rosetta.world.block.AxisAlignedBB
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.block.ComplexShape
 import me.liuli.rosetta.world.data.*
+import kotlin.math.ceil
 import java.util.*
+import kotlin.math.floor
 
 class World {
 
@@ -84,9 +86,9 @@ class World {
     fun getSurroundingBBs(queryBB: AxisAlignedBB, blockOk: (Block, Int, Int, Int) -> Boolean): List<AxisAlignedBB> {
         val list = mutableListOf<AxisAlignedBB>()
 
-        for (y in (queryBB.minY - 1).toInt()..(queryBB.maxY).toInt()) {
-            for (x in queryBB.minX.toInt()..queryBB.maxX.toInt()) {
-                for (z in queryBB.minZ.toInt()..queryBB.maxZ.toInt()) {
+        for (y in (floor(queryBB.minY) - 1).toInt()..ceil(queryBB.maxY).toInt()) {
+            for (x in floor(queryBB.minX).toInt()..ceil(queryBB.maxX).toInt()) {
+                for (z in floor(queryBB.minZ).toInt()..ceil(queryBB.maxZ).toInt()) {
                     val shape = getBlockAt(x, y, z)?.let { if(blockOk(it, x, y, z)) it else null }?.shape
                     if (shape is ComplexShape) {
                         for (subshape in shape.shapes) {
@@ -109,9 +111,9 @@ class World {
     fun getSurroundingBlocks(queryBB: AxisAlignedBB, blockOk: (Block, Int, Int, Int) -> Boolean): List<Vec3i> {
         val list = mutableListOf<Vec3i>()
 
-        for (y in (queryBB.minY - 1).toInt()..(queryBB.maxY).toInt()) {
-            for (x in queryBB.minX.toInt()..queryBB.maxX.toInt()) {
-                for (z in queryBB.minZ.toInt()..queryBB.maxZ.toInt()) {
+        for (y in (floor(queryBB.minY) - 1).toInt()..ceil(queryBB.maxY).toInt()) {
+            for (x in floor(queryBB.minX).toInt()..ceil(queryBB.maxX).toInt()) {
+                for (z in floor(queryBB.minZ).toInt()..ceil(queryBB.maxZ).toInt()) {
                     getBlockAt(x, y, z)?.also {
                         if (blockOk(it, x, y, z)) {
                             list.add(Vec3i(x, y, z))
