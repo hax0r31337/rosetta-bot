@@ -2,6 +2,7 @@ package test.rosetta
 
 import me.liuli.rosetta.bot.MinecraftBot
 import me.liuli.rosetta.bot.event.*
+import me.liuli.rosetta.world.data.EnumBlockFacing
 
 class EventListener(val bot: MinecraftBot) : ListenerSet() {
 

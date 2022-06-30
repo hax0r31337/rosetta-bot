@@ -16,7 +16,7 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
     val world = World()
     var isConnected = false
     var tickDelay = 50L
-    val controller = PlayerController()
+    val controller = PlayerController(this)
 
     private val handler = BotProtocolHandler(this)
     private var executor: ScheduledExecutorService? = null
@@ -52,8 +52,9 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
 
     private var lastSlot = 0
 
-    fun tick() {
+    private fun tick() {
         world.tick()
+        controller.tick()
 
         // update player
         if (player.health <= 0 && player.isAlive) {

@@ -63,6 +63,16 @@ interface WorldIdentifier {
     fun isClimbable(block: Block): Boolean
 
     /**
+     * check if the target block is a gravity block (etc. Gravel)
+     */
+    fun isGravityBlock(block: Block): Boolean
+
+    /**
+     * check if the block is openable door
+     */
+    fun isOpenableDoor(block: Block): Boolean
+
+    /**
      * @return jump boost level, 0 if don't have
      */
     fun jumpBoostLevel(entity: EntityLiving): Int

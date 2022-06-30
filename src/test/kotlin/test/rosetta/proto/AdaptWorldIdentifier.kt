@@ -62,4 +62,12 @@ class AdaptWorldIdentifier : WorldIdentifier {
     override fun isClimbable(block: Block): Boolean {
         return block.name == "ladder" || block.name == "vine"
     }
+
+    override fun isGravityBlock(block: Block): Boolean {
+        return block.name == "sand" || block.name == "gravel"
+    }
+
+    override fun isOpenableDoor(block: Block): Boolean {
+        return block.name.contains("gate") && !block.name.contains("iron")
+    }
 }
