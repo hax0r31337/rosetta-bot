@@ -56,7 +56,7 @@ object Main {
 //            println("Disconnected: ${it.reason}")
 //        })
         bot.registerListeners(*(EventListener(bot).listeners)) // setup event listeners to handle events
-        Physics(bot, AdaptWorldIdentifier()).setupTickListener()
+        bot.registerListener(Physics(bot, AdaptWorldIdentifier()).getListener())
 
         bot.connect("127.0.0.1", 25565) // connect to the server and don't block the current thread
     }

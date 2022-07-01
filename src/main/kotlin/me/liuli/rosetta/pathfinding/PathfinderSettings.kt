@@ -149,12 +149,17 @@ abstract class PathfinderSettings(val bot: MinecraftBot, val identifier: WorldId
     open fun safeOrBreak(block: PathBlock, toBreak: MutableList<Block>): Float {
         if (block.safe) return 0f
         if (!this.safeToBreak(block)) return 100f
-        // TODO: process block break
-        return 100f
+        val digTime = block.block.digTime(bot.player.inventory.heldItem, false, false)
+        return (1 + digTime * 0.003f) * this.digCost
     }
 
     data class PathBlock(val x: Int, val y: Int, val z: Int, val block: Block,
                          val replaceable: Boolean, val canFall: Boolean, val safe: Boolean,
                          val physical: Boolean, val liquid: Boolean, val climbable: Boolean,
                          val height: Double, val openable: Boolean)
+
+    companion object {
+        val cardinalDirections = arrayOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1)
+        val diagonalDirections = arrayOf(-1 to -1, -1 to 1, 1 to -1, 1 to 1)
+    }
 }

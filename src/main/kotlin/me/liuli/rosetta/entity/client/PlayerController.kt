@@ -5,18 +5,7 @@ import me.liuli.rosetta.util.vec.Vec3i
 import me.liuli.rosetta.world.data.EnumBlockFacing
 import me.liuli.rosetta.world.data.EnumGameMode
 
-class PlayerController(val bot: MinecraftBot) {
-
-    var forward = false
-    var back = false
-    var left = false
-    var right = false
-    var jump = false
-
-    val forwardValue: Float
-        get() = (if(forward) 1f else 0f) - (if(back) 1f else 0f)
-    val strafeValue: Float
-        get() = (if(right) 1f else 0f) - (if(left) 1f else 0f)
+class PlayerController(val bot: MinecraftBot) : PlayerInput() {
 
     var currentBreakingBlock: Vec3i? = null
         set(value) {
@@ -24,7 +13,7 @@ class PlayerController(val bot: MinecraftBot) {
                 bot.protocol.dig(field!!.x, field!!.y, field!!.z, currentBreakingFacing ?: EnumBlockFacing.UP, 2)
             }
             if (value != null) {
-                bot.protocol.dig(value!!.x, value!!.y, value!!.z, currentBreakingFacing ?: EnumBlockFacing.UP, 0)
+                bot.protocol.dig(value.x, value.y, value.z, currentBreakingFacing ?: EnumBlockFacing.UP, 0)
             }
             field = value
         }
@@ -60,5 +49,12 @@ class PlayerController(val bot: MinecraftBot) {
         currentBreakFinishTick = bot.world.tickExisted + breakTicks
 
         return true
+    }
+
+    /**
+     * request server to jump, if you want to jump please set [jump] to true
+     */
+    fun packetJump() {
+        bot.protocol.jump()
     }
 }
