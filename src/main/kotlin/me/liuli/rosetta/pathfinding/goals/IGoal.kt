@@ -1,6 +1,6 @@
 package me.liuli.rosetta.pathfinding.goals
 
-import me.liuli.rosetta.pathfinding.Move
+import me.liuli.rosetta.pathfinding.path.Move
 
 interface IGoal {
 
