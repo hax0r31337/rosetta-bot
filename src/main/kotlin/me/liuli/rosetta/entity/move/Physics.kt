@@ -5,7 +5,6 @@ import me.liuli.rosetta.bot.event.FuncListener
 import me.liuli.rosetta.bot.event.Listener
 import me.liuli.rosetta.bot.event.PreMotionEvent
 import me.liuli.rosetta.entity.EntityLiving
-import me.liuli.rosetta.entity.client.EntityClientPlayer
 import me.liuli.rosetta.entity.client.PlayerController
 import me.liuli.rosetta.entity.client.PlayerInput
 import me.liuli.rosetta.util.vec.Vec3f

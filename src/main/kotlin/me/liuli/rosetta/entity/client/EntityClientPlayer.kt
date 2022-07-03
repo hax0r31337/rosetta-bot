@@ -5,10 +5,7 @@ import me.liuli.rosetta.entity.inventory.PlayerInventory
 import me.liuli.rosetta.entity.inventory.Window
 import me.liuli.rosetta.entity.move.IMoveSpeedModifier
 import me.liuli.rosetta.entity.move.ISimulatable
-import me.liuli.rosetta.entity.move.PhysicsSetting
 import me.liuli.rosetta.util.vec.Vec3d
-import me.liuli.rosetta.world.World
-import me.liuli.rosetta.world.WorldIdentifier
 
 class EntityClientPlayer : EntityPlayer(), ISimulatable {
 

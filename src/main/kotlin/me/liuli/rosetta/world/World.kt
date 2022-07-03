@@ -6,8 +6,8 @@ import me.liuli.rosetta.world.block.AxisAlignedBB
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.block.ComplexShape
 import me.liuli.rosetta.world.data.*
-import kotlin.math.ceil
 import java.util.*
+import kotlin.math.ceil
 import kotlin.math.floor
 
 class World {
@@ -51,6 +51,10 @@ class World {
 
     fun getChunkAt(x: Int, z: Int): Chunk? {
         return chunk[Chunk.code(x, z)]
+    }
+
+    fun getChunkAtBlock(x: Int, z: Int): Chunk? {
+        return chunk[Chunk.code(x shr 4, z shr 4)]
     }
 
     fun setChunk(chunk: Chunk) {
