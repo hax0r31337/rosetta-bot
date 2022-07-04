@@ -5,8 +5,7 @@ import me.liuli.rosetta.pathfinding.goals.IGoal
 import me.liuli.rosetta.pathfinding.path.Move
 import me.liuli.rosetta.world.Chunk
 
-class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGoal,
-            val timeout: Long = 5000, searchRadius: Int = -1) {
+class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGoal) {
 
     private val closedDataSet = hashSetOf<Int>()
     private val openHeap = BinaryHeapOpenSet()
@@ -22,13 +21,13 @@ class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGo
         openDataMap[startNode.data.hashCode()] = startNode
         bestNode = startNode
 
-        maxCost = if (searchRadius < 0) -1 else startNode.h.toInt() + searchRadius
+        maxCost = if (settings.searchRadius < 0) -1 else startNode.h.toInt() + settings.searchRadius
     }
 
     fun compute(): Result {
         val computeStartTime = System.currentTimeMillis()
         while (!openHeap.isEmpty()) {
-            if (System.currentTimeMillis() - computeStartTime > this.timeout) {
+            if (System.currentTimeMillis() - computeStartTime > settings.searchTimeout) {
                 return makeResult(ResultStatus.TIMEOUT, this.bestNode, computeStartTime)
             }
             val node = this.openHeap.pop()

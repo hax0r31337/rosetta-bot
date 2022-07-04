@@ -13,6 +13,14 @@ import kotlin.math.sqrt
 
 abstract class PathfinderSettings(val bot: MinecraftBot, val identifier: WorldIdentifier,
     /**
+     * Total computation timeout.
+     */
+    val searchTimeout: Int = 5000,
+    /**
+     * Max distance to search.
+     */
+    val searchRadius: Int = -1,
+    /**
      * Boolean to allow breaking blocks
      */
     var canDig: Boolean = true,

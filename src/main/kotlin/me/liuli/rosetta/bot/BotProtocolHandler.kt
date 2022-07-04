@@ -4,8 +4,10 @@ import me.liuli.rosetta.bot.event.*
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.entity.EntityLiving
 import me.liuli.rosetta.entity.EntityPlayer
+import me.liuli.rosetta.entity.client.EntityClientPlayer
 import me.liuli.rosetta.entity.inventory.EnumEquipment
 import me.liuli.rosetta.entity.inventory.Window
+import me.liuli.rosetta.util.vec.Vec3i
 import me.liuli.rosetta.world.Chunk
 import me.liuli.rosetta.world.block.Block
 import me.liuli.rosetta.world.data.*
@@ -31,18 +33,21 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         bot.player.id = entityId
         bot.world.entities[entityId] = bot.player
         bot.world.dimension = dimension
+        bot.emit(PlayerJoinGameEvent())
     }
 
     fun onGamemodeChange(gamemode: EnumGameMode) {
+        bot.emit(WorldGameModeChangeEvent(gamemode))
         bot.world.gamemode = gamemode
     }
 
     fun onDifficultyChange(difficulty: EnumDifficulty) {
+        bot.emit(WorldDifficultyChangeEvent(difficulty))
         bot.world.difficulty = difficulty
     }
 
     fun onPlayerTeleport(x: Double, y: Double, z: Double, yaw: Float, pitch: Float): Boolean {
-        val event = TeleportEvent(x, y, z, yaw, pitch)
+        val event = PlayerTeleportEvent(x, y, z, yaw, pitch)
         bot.emit(event)
 
         if (event.isCancelled) {
@@ -62,10 +67,12 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun onTimeUpdate(time: Long) {
+        bot.emit(WorldTimeChangeEvent(time))
         bot.world.time = time
     }
 
     fun onAbilitiesChange(isFlying: Boolean, canFly: Boolean, isInvincible: Boolean) {
+        bot.emit(PlayerAbilitiesChangeEvent(isFlying, canFly, isInvincible))
         bot.player.flying = isFlying
         bot.player.canFly = canFly
         bot.player.invincible = isInvincible
@@ -73,11 +80,13 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun onMoveSpeedChange(walkSpeed: Float, flySpeed: Float) {
+        bot.emit(PlayerMoveSpeedChangeEvent(walkSpeed, flySpeed))
         bot.player.baseWalkSpeed = walkSpeed
         bot.player.baseFlySpeed = flySpeed
     }
 
     fun onFoodChange(food: Float, foodSaturation: Float) {
+        bot.emit(PlayerFoodLevelChangeEvent(food, foodSaturation))
         bot.player.food = food
         bot.player.foodSaturation = foodSaturation
     }
@@ -87,16 +96,19 @@ class BotProtocolHandler(val bot: MinecraftBot) {
         if (entity !is EntityLiving) {
             return
         }
+        bot.emit(EntityHealthChangeEvent(entity, health, maxHealth, absorption))
         entity.health = health
         entity.maxHealth = maxHealth
         entity.absorption = absorption
     }
 
     fun onSpawnPositionChange(x: Int, y: Int, z: Int) {
+        bot.emit(WorldSpawnPointChangeEvent(Vec3i(x, y, z)))
         bot.world.spawn.set(x, y, z)
     }
 
     fun onExperienceChange(experience: Float, level: Int) {
+        bot.emit(PlayerExperienceLevelChangeEvent(experience, level))
         bot.player.exp = experience
         bot.player.expLevel = level
     }
@@ -114,17 +126,21 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun spawnEntity(instance: Entity) {
+        bot.emit(EntitySpawnEvent(instance))
         bot.world.entities[instance.id] = instance
     }
 
     fun onSetMotion(entityId: Int, motionX: Double, motionY: Double, motionZ: Double) {
-        if (entityId == bot.player.id) {
-            bot.player.motion.set(motionX, motionY, motionZ)
+        val entity = bot.world.entities[entityId] ?: return
+        bot.emit(EntityVelocitySetEvent(entity, motionX, motionY, motionZ))
+        if (entity is EntityClientPlayer) {
+            entity.motion.set(motionX, motionY, motionZ)
         }
     }
 
     fun onTeleport(entityId: Int, x: Double, y: Double, z: Double, yaw: Float, pitch: Float, onGround: Boolean) {
         val entity = bot.world.entities[entityId] ?: return
+        bot.emit(EntityMoveEvent(entity, x, y, z, yaw, pitch))
         entity.position.set(x, y, z)
         entity.rotation.set(yaw, pitch)
     }
@@ -135,23 +151,27 @@ class BotProtocolHandler(val bot: MinecraftBot) {
 
     fun onMovement(entityId: Int, onGround: Boolean, x: Double, y: Double, z: Double) {
         val entity = bot.world.entities[entityId] ?: return
+        bot.emit(EntityMoveEvent(entity, x, y, z, entity.rotation.x, entity.rotation.y))
         entity.position.set(x, y, z)
     }
 
     fun onMovement(entityId: Int, onGround: Boolean, x: Double, y: Double, z: Double, yaw: Float, pitch: Float) {
         val entity = bot.world.entities[entityId] ?: return
+        bot.emit(EntityMoveEvent(entity, x, y, z, yaw, pitch))
         entity.position.set(x, y, z)
         entity.rotation.set(yaw, pitch)
     }
 
     fun onMovement(entityId: Int, onGround: Boolean, yaw: Float, pitch: Float) {
         val entity = bot.world.entities[entityId] ?: return
+        bot.emit(EntityMoveEvent(entity, entity.position.x, entity.position.y, entity.position.z, yaw, pitch))
         entity.rotation.set(yaw, pitch)
     }
 
 
     fun onRemoveEntity(entityId: Int) {
         val entity = bot.world.entities[entityId] ?: return
+        bot.emit(EntityDespawnEvent(entity))
         entity.riding = null
         entity.passengers.map { it }.forEach {
             it.riding = null
@@ -160,6 +180,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun onWeatherUpdate(rain: Float, thunder: Float) {
+        bot.emit(WorldWeatherChangeEvent(rain, thunder))
         bot.world.rainStrength = rain
         bot.world.thunderStrength = thunder
     }
@@ -197,24 +218,29 @@ class BotProtocolHandler(val bot: MinecraftBot) {
 
     fun addEffect(entityId: Int, effect: PotionEffect) {
         val entity = bot.world.entities[entityId] as? EntityLiving ?: return
+        bot.emit(EntityAddEffectEvent(entity, effect))
         entity.effects.removeIf { it.name == effect.name }
         entity.effects.add(effect)
     }
 
     fun removeEffect(entityId: Int, effect: String) {
         val entity = bot.world.entities[entityId] as? EntityLiving ?: return
+        bot.emit(EntityRemoveEffectEvent(entity, effect))
         entity.effects.removeIf { it.name == effect }
     }
 
     fun onChunk(chunk: Chunk) {
+        bot.emit(WorldChunkLoadEvent(chunk))
         bot.world.setChunk(chunk)
     }
 
     fun unloadChunk(x: Int, z: Int) {
+        bot.emit(WorldChunkUnloadEvent(x, z))
         bot.world.eraseChunkAt(x, z)
     }
 
     fun onBlockUpdate(x: Int, y: Int, z: Int, block: Block) {
+        bot.emit(WorldBlockUpdateEvent(x, y, z, block))
         bot.world.setBlockAt(x, y, z, block)
     }
 
@@ -223,6 +249,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun onRespawn(dimension: Int, clearChunk: Boolean) {
+        bot.emit(PlayerRespawnEvent(dimension, clearChunk))
         bot.world.dimension = dimension
         if (clearChunk) {
             bot.world.chunk.clear()
@@ -230,17 +257,18 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun onHeldItemChange(heldItem: Int) {
+        bot.emit(PlayerHeldItemChangedEvent(heldItem))
         bot.player.heldItemSlot = heldItem
     }
 
-    fun onPlayerDeath(entityId: Int, cause: String) {
+    fun onEntityDeath(entityId: Int, cause: String) {
         if (entityId == bot.player.id) {
-            bot.emit(DeathEvent(cause))
+            bot.emit(PlayerDeathEvent(cause))
             bot.player.isAlive = false
         }
     }
 
-    fun onPlayerPose(entityId: Int, sprinting: Boolean, sneaking: Boolean) {
+    fun onEntityPose(entityId: Int, sprinting: Boolean, sneaking: Boolean) {
         val player = bot.world.entities[entityId] as? EntityPlayer ?: return
         player.sprinting = sprinting
         player.sneaking = sneaking
@@ -279,6 +307,7 @@ class BotProtocolHandler(val bot: MinecraftBot) {
     }
 
     fun setWindow(window: Window?) {
+        bot.emit(PlayerWindowDisplayEvent(window))
         bot.player.openWindow = window
     }
 

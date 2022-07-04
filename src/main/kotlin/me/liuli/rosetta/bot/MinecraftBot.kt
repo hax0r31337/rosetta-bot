@@ -59,7 +59,7 @@ class MinecraftBot(val account: MinecraftAccount, val protocol: MinecraftProtoco
         // update player
         if (player.health <= 0 && player.isAlive) {
             player.isAlive = false
-            emit(DeathEvent())
+            emit(PlayerDeathEvent())
         } else if (player.health > 0 && !player.isAlive) {
             player.isAlive = true
         }

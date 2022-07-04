@@ -48,7 +48,7 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
 //    }
 
     @Listen
-    fun onDeath(event: DeathEvent) {
+    fun onDeath(event: PlayerDeathEvent) {
         println("Death: ${event.cause}")
         bot.protocol.respawn()
     }

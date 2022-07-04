@@ -266,7 +266,7 @@ class PacketProcess(private val handler: BotProtocolHandler, private val client:
             }
             is ServerCombatPacket -> {
                 if (pk.combatState == CombatState.ENTITY_DEAD) {
-                    handler.onPlayerDeath(pk.entityId, pk.message.fullText)
+                    handler.onEntityDeath(pk.entityId, pk.message.fullText)
                 }
             }
             is ServerDifficultyPacket -> {

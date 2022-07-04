@@ -1,4 +1,6 @@
 package me.liuli.rosetta.pathfinding
 
-class Pathfinder {
+import me.liuli.rosetta.bot.event.ListenerSet
+
+class Pathfinder(val settings: PathfinderSettings) : ListenerSet() {
 }
