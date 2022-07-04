@@ -183,6 +183,7 @@ abstract class PathfinderSettings(val bot: MinecraftBot, val identifier: WorldId
         if (!this.safeToBreak(block)) return 100f
         toBreak.add(PathBreakInfo(block))
         val digTime = block.block.digTime(bot.player.inventory.heldItem, false, false)
+        // TODO find out best item
         return (1 + digTime * 0.003f) * this.digCost
     }
 

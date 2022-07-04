@@ -1,6 +1,9 @@
 package me.liuli.rosetta.entity.client
 
 import me.liuli.rosetta.bot.MinecraftBot
+import me.liuli.rosetta.util.getEyesLocation
+import me.liuli.rosetta.util.getRotationOf
+import me.liuli.rosetta.util.vec.Vec3d
 import me.liuli.rosetta.util.vec.Vec3i
 import me.liuli.rosetta.world.data.EnumBlockFacing
 import me.liuli.rosetta.world.data.EnumGameMode
@@ -47,6 +50,12 @@ class PlayerController(val bot: MinecraftBot) : PlayerInput() {
         currentBreakingFacing = facing
         currentBreakingBlock = Vec3i(x, y, z)
         currentBreakFinishTick = bot.world.tickExisted + breakTicks
+
+        if (lookAt) {
+            val rotation = getRotationOf(Vec3d(x + 0.5, y + 0.5, z + 0.5), getEyesLocation(bot.player))
+            bot.player.rotation.x = rotation.first
+            bot.player.rotation.y = rotation.second
+        }
 
         return true
     }

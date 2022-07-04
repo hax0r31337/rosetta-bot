@@ -2,6 +2,11 @@ package test.rosetta
 
 import me.liuli.rosetta.bot.MinecraftBot
 import me.liuli.rosetta.bot.event.*
+import me.liuli.rosetta.entity.EntityPlayer
+import me.liuli.rosetta.util.getEyesLocation
+import me.liuli.rosetta.util.getRotationOf
+import me.liuli.rosetta.util.vec.Vec3d
+import me.liuli.rosetta.world.data.EnumBlockFacing
 
 class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
@@ -39,7 +44,6 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
 
     @Listen
     fun onPreMotion(event: PreMotionEvent) {
-//        bot.chat(bot.player.position.toString())
     }
 
 //    @Listen
