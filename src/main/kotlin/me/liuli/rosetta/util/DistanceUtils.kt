@@ -7,11 +7,11 @@ import kotlin.math.sqrt
 fun distanceXZ(dx: Int, dz: Int): Float {
     val x = abs(dx)
     val z = abs(dz)
-    return abs(dx - dz) + min(dx, dz) * sqrt(2f)
+    return abs(x - z) + min(x, z) * sqrt(2f)
 }
 
 fun distanceXZ(dx: Double, dz: Double): Double {
     val x = abs(dx)
     val z = abs(dz)
-    return abs(dx - dz) + min(dx, dz) * sqrt(2.0)
+    return abs(x - z) + min(x, z) * sqrt(2.0)
 }

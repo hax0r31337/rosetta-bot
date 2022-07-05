@@ -17,9 +17,14 @@ abstract class PathfinderSettings(val bot: MinecraftBot, val identifier: WorldId
      */
     val searchTimeout: Int = 5000,
     /**
+     * Total computation timeout.
+     */
+    val searchTickTimeout: Int = 40,
+    /**
      * Max distance to search.
      */
     val searchRadius: Int = -1,
+    val losWhenPlacingBlocks: Boolean = true,
     /**
      * Boolean to allow breaking blocks
      */
@@ -135,20 +140,12 @@ abstract class PathfinderSettings(val bot: MinecraftBot, val identifier: WorldId
         return height > 0.1
     }
 
-    /**
-     * is the block is full block
-     */
-    open fun isFullCube(block: Block): Boolean {
-        val shape = block.shape ?: return false
-        return shape.minX == .0 && shape.minY == .0 && shape.minZ == .0 && shape.maxX == 1.0 && shape.maxY == 1.0 && shape.maxZ == 1.0
-    }
-
     open fun getBlockAt(x: Int, y: Int, z: Int): PathBlock {
         val block = bot.world.getBlockAt(x, y, z)
             ?: return PathBlock(x, y, z, Block.AIR, false, false, false, false, false, false, .0, false)
         return PathBlock(x, y, z, block, replaceableBlock(block), identifier.isGravityBlock(block),
             !needAvoidBlock(block) && (isSafeToWalkOn(block) || identifier.isClimbable(block)),
-            isFullCube(block), identifier.getWaterDepth(block) != -1 || identifier.isLava(block),
+            block.shape != null, identifier.getWaterDepth(block) != -1 || identifier.isLava(block),
             identifier.isClimbable(block), y +
                     getBlockHeight(block), identifier.isOpenableDoor(block))
     }

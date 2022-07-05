@@ -12,6 +12,7 @@ class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGo
     private val openDataMap = hashMapOf<Int, PathNode>()
     private val visitedChunks = hashSetOf<Long>()
     private val maxCost: Int
+    private var computedTime = 0
 
     private var bestNode: PathNode
 
@@ -27,12 +28,18 @@ class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGo
     fun compute(): Result {
         val computeStartTime = System.currentTimeMillis()
         while (!openHeap.isEmpty()) {
-            if (System.currentTimeMillis() - computeStartTime > settings.searchTimeout) {
-                return makeResult(ResultStatus.TIMEOUT, this.bestNode, computeStartTime)
+            if (System.currentTimeMillis() - computeStartTime > settings.searchTickTimeout) {
+                computedTime += (System.currentTimeMillis() - computeStartTime).toInt()
+                return makeResult(ResultStatus.PARTIAL, this.bestNode)
+            }
+            if (System.currentTimeMillis() - computeStartTime > settings.searchTimeout - computedTime) {
+                computedTime += (System.currentTimeMillis() - computeStartTime).toInt()
+                return makeResult(ResultStatus.TIMEOUT, this.bestNode)
             }
             val node = this.openHeap.pop()
             if (this.goal.isEnd(node.data)) {
-                return makeResult(ResultStatus.SUCCESS, node, computeStartTime)
+                computedTime += (System.currentTimeMillis() - computeStartTime).toInt()
+                return makeResult(ResultStatus.SUCCESS, node)
             }
             // not done yet
             this.openDataMap.remove(node.data.hashCode())
@@ -55,7 +62,7 @@ class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGo
                     // add neighbor to the open set
                     neighborNode = PathNode()
                     // properties will be set later
-                    this.openDataMap.set(neighborData.hashCode(), neighborNode)
+                    this.openDataMap[neighborData.hashCode()] = neighborNode
                 } else {
                     if (neighborNode.g < gFromThisNode) {
                         // skip this one because another route is faster
@@ -75,15 +82,15 @@ class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGo
             }
         }
         // all the neighbors of every accessible node have been exhausted
-        return makeResult(ResultStatus.NO_PATH, this.bestNode, computeStartTime)
+        computedTime += (System.currentTimeMillis() - computeStartTime).toInt()
+        return makeResult(ResultStatus.NO_PATH, this.bestNode)
     }
 
     private fun getChunkCode(x: Int, z: Int): Long {
         return Chunk.code(x shr 4, z shr 4)
     }
 
-    private fun makeResult(status: ResultStatus, node: PathNode, startTime: Long): Result {
-        val time = System.currentTimeMillis() - startTime
+    private fun makeResult(status: ResultStatus, node: PathNode): Result {
         val path = mutableListOf<Move>()
         var iterNode: PathNode? = node
         while(iterNode?.parent != null) {
@@ -92,14 +99,15 @@ class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGo
         }
         path.reverse()
 
-        return Result(status, node.g, time, this.closedDataSet.size,
+        return Result(status, node.g, computedTime, this.closedDataSet.size,
             this.closedDataSet.size + this.openHeap.size(), path, this)
     }
 
-    data class Result(val status: ResultStatus, val cost: Double, val timeCost: Long,
+    data class Result(val status: ResultStatus, val cost: Double, val timeCost: Int,
                       val visitedNodes: Int, val generatedNodes: Int, val path: MutableList<Move>, val context: AStar)
 
     enum class ResultStatus {
+        PARTIAL,
         TIMEOUT,
         NO_PATH,
         SUCCESS

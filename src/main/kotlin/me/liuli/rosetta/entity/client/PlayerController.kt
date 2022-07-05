@@ -61,6 +61,13 @@ class PlayerController(val bot: MinecraftBot) : PlayerInput() {
     }
 
     /**
+     * abort current breaking block
+     */
+    fun abortBreaking() {
+        currentBreakingBlock = null
+    }
+
+    /**
      * request server to jump, if you want to jump please set [jump] to true
      */
     fun packetJump() {
