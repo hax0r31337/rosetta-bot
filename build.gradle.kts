@@ -21,7 +21,7 @@ dependencies {
 
     testImplementation("com.github.liulihaocai:MCProtocolLib:e0af4caff6")
     testImplementation("com.github.GeyserMC:OpenNBT:1.0")
-    testImplementation("com.github.Kawa1Ares:Elixir:1.2.5")
+    testImplementation("com.github.CCBlueX:Elixir:1.2.4")
 }
 
 tasks {

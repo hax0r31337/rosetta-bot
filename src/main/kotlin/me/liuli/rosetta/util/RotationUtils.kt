@@ -46,6 +46,14 @@ fun getRotationOf(vec: Vec3d, eyesPos: Vec3d): Pair<Float, Float> {
     )
 }
 
+fun getViewVector(yaw: Float, pitch: Float): Vec3d {
+    val csPitch = Math.cos(pitch.toDouble())
+    val snPitch = Math.sin(pitch.toDouble())
+    val csYaw = Math.cos(yaw.toDouble())
+    val snYaw = Math.sin(yaw.toDouble())
+    return Vec3d(-snYaw * csPitch, snPitch, -csYaw * csPitch)
+}
+
 fun wrapAngleTo180(angleIn: Float): Float {
     var angle = angleIn % 360
     if (angle >= 180) {

@@ -40,6 +40,15 @@ abstract class Inventory {
         }
     }
 
+    open fun searchInIndex(from: Int, to: Int, func: (Item) -> Boolean): Int? {
+        for(i in from..to) {
+            if (func(this[i])) {
+                return i
+            }
+        }
+        return null
+    }
+
     // get frequency used items
     abstract var heldItem: Item
     abstract var helmetItem: Item

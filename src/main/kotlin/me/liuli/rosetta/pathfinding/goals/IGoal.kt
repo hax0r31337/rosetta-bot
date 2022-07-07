@@ -1,6 +1,7 @@
 package me.liuli.rosetta.pathfinding.goals
 
 import me.liuli.rosetta.pathfinding.path.Move
+import me.liuli.rosetta.util.vec.Vec3i
 
 interface IGoal {
 
@@ -12,7 +13,7 @@ interface IGoal {
     /**
      * @return true if the node has reach the goal
      */
-    fun isEnd(node: Move): Boolean
+    fun isEnd(pos: Vec3i): Boolean
 
     /**
      * @return true if the goal has changed and the current path

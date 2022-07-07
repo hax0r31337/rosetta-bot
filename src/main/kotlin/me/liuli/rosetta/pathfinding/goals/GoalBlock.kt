@@ -2,6 +2,7 @@ package me.liuli.rosetta.pathfinding.goals
 
 import me.liuli.rosetta.pathfinding.path.Move
 import me.liuli.rosetta.util.distanceXZ
+import me.liuli.rosetta.util.vec.Vec3i
 import kotlin.math.abs
 
 /**
@@ -13,8 +14,8 @@ open class GoalBlock(val x: Int, val y: Int, val z: Int) : IGoal {
         return distanceXZ(this.x - node.x, this.z - node.z).toDouble() + abs(this.y - node.y)
     }
 
-    override fun isEnd(node: Move): Boolean {
-        return node.x == this.x && node.y == this.y && node.z == this.z
+    override fun isEnd(pos: Vec3i): Boolean {
+        return pos.x == this.x && pos.y == this.y && pos.z == this.z
     }
 
     override fun hasChanged() = false

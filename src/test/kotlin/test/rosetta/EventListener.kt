@@ -3,12 +3,15 @@ package test.rosetta
 import me.liuli.rosetta.bot.MinecraftBot
 import me.liuli.rosetta.bot.event.*
 import me.liuli.rosetta.entity.EntityPlayer
+import me.liuli.rosetta.pathfinding.Pathfinder
+import me.liuli.rosetta.pathfinding.goals.GoalBlock
+import me.liuli.rosetta.pathfinding.goals.GoalNear
 import me.liuli.rosetta.util.getEyesLocation
 import me.liuli.rosetta.util.getRotationOf
 import me.liuli.rosetta.util.vec.Vec3d
 import me.liuli.rosetta.world.data.EnumBlockFacing
 
-class EventListener(val bot: MinecraftBot) : ListenerSet() {
+class EventListener(val bot: MinecraftBot, private val pathfinder: Pathfinder) : ListenerSet() {
 
     @Listen
     fun onDisconnect(event: DisconnectEvent) {
@@ -34,6 +37,15 @@ class EventListener(val bot: MinecraftBot) : ListenerSet() {
         } else if (event.message.contains("sprint")) {
             bot.player.sprinting = !bot.player.sprinting
             bot.chat("MOVE_SP ${bot.player.sprinting}")
+        } else if (event.message.contains("come")) {
+            val entity = bot.world.entities.values.firstOrNull { it != bot.player && it is EntityPlayer }
+            if (entity == null) {
+                bot.chat("Not see you!")
+                return
+            }
+            val pos = entity.position.floored()
+            pathfinder.setGoal(GoalNear(pos.x, pos.y, pos.z, 2.0))
+            bot.chat("coming!")
         }
     }
 

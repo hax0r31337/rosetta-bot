@@ -3,6 +3,7 @@ package me.liuli.rosetta.pathfinding.goals
 import me.liuli.rosetta.entity.Entity
 import me.liuli.rosetta.pathfinding.path.Move
 import me.liuli.rosetta.util.distanceXZ
+import me.liuli.rosetta.util.vec.Vec3i
 import kotlin.math.abs
 import kotlin.math.floor
 
@@ -17,10 +18,10 @@ open class GoalFollow(val entity: Entity, range: Double) : IGoal {
         return distanceXZ(this.x - node.x, this.z - node.z).toDouble() + abs(this.y - node.y)
     }
 
-    override fun isEnd(node: Move): Boolean {
-        val dx = this.x - node.x
-        val dy = this.y - node.y
-        val dz = this.z - node.z
+    override fun isEnd(pos: Vec3i): Boolean {
+        val dx = this.x - pos.x
+        val dy = this.y - pos.y
+        val dz = this.z - pos.z
         return (dx * dx + dy * dy + dz * dz) <= this.rangeSq
     }
 

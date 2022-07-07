@@ -1,5 +1,6 @@
 package me.liuli.rosetta.util.vec
 
+import kotlin.math.floor
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -22,6 +23,10 @@ data class Vec3d(var x: Double = .0, var y: Double = .0, var z: Double = .0) {
         return this
     }
 
+    fun distanceSq(x: Double, y: Double, z: Double): Double {
+        return (x - this.x).pow(2) + (y - this.y).pow(2) + (z - this.z).pow(2)
+    }
+
     fun distanceTo(x: Double, y: Double, z: Double): Double {
         return sqrt((x - this.x).pow(2) + (y - this.y).pow(2) + (z - this.z).pow(2))
     }
@@ -38,5 +43,9 @@ data class Vec3d(var x: Double = .0, var y: Double = .0, var z: Double = .0) {
             this.z /= norm
         }
         return this
+    }
+
+    fun floored(): Vec3i {
+        return Vec3i(floor(this.x).toInt(), floor(this.y).toInt(), floor(this.z).toInt())
     }
 }

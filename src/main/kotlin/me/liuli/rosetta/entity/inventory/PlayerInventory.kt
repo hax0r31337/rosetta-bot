@@ -26,4 +26,11 @@ class PlayerInventory(private val player: EntityClientPlayer) : Inventory() {
     override var bootsItem: Item
         get() = storage[bootsItemSlot]
         set(value) { storage[bootsItemSlot] = value }
+
+    /**
+     * search item on hotbar
+     */
+    fun searchHotbar(func: (Item) -> Boolean): Int? {
+        return this.searchInIndex(heldItemSlot, heldItemSlot+8, func)
+    }
 }

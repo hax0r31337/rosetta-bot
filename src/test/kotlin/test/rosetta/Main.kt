@@ -61,10 +61,10 @@ object Main {
         val bot = MinecraftBot(getAccount(), proto) // create a bot instance with the account and protocol
         val identifier = AdaptWorldIdentifier()
         val physics = Physics(bot, identifier)
-//        val pathSettings = AdaptPathfinderSettings(bot, identifier)
-//        val pathfinder = Pathfinder(pathSettings)
+        val pathSettings = AdaptPathfinderSettings(bot, identifier)
+        val pathfinder = Pathfinder(pathSettings, physics)
 
-        bot.registerListeners(*(EventListener(bot).listeners)) // setup event listeners to handle events
+        bot.registerListeners(*(EventListener(bot, pathfinder).listeners)) // setup event listeners to handle events
         bot.registerListener(physics.getListener())
 
 //        var path = mutableListOf<Move>()

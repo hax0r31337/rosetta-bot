@@ -125,6 +125,43 @@ abstract class PathfinderSettings(val bot: MinecraftBot, val identifier: WorldId
     }
 
     /**
+     * search for usable bridge item
+     */
+    open fun searchBridgeableItem() = bot.player.inventory.searchHotbar { bridgeableItem(it) }
+
+    /**
+     * get amount of bridgeable items
+     */
+    open fun countBridgeableItems(): Int {
+        var count = 0
+
+        for(i in bot.player.inventory.heldItemSlot until bot.player.inventory.heldItemSlot + 9) {
+            val item = bot.player.inventory[i]
+            if (bridgeableItem(item)) {
+                count += item.count
+            }
+        }
+
+        return count
+    }
+
+    /**
+     * get best harvest item
+     */
+    open fun bestHarvestItem(block: Block): Int {
+        var digTime = block.digTime(Item.AIR, false, false)
+        var slot = bot.player.heldItemSlot
+        for(i in bot.player.inventory.heldItemSlot until bot.player.inventory.heldItemSlot + 9) {
+            val time = block.digTime(bot.player.inventory[i], false, false)
+            if (time < digTime) {
+                slot = i - bot.player.inventory.heldItemSlot
+                digTime = time
+            }
+        }
+        return slot
+    }
+
+    /**
      * is the block can be walk on safely (like height smaller than 0.1)
      */
     open fun isSafeToWalkOn(block: Block): Boolean {
@@ -168,7 +205,7 @@ abstract class PathfinderSettings(val bot: MinecraftBot, val identifier: WorldId
             if (this.getBlockAt(block.x, block.y + 1, block.z).canFall) return false
         }
 
-        return !this.canBreakBlock(block.block) && this.exclusionBreak(block) < 100
+        return this.canBreakBlock(block.block) && this.exclusionBreak(block) < 100
     }
 
     /**
@@ -179,9 +216,8 @@ abstract class PathfinderSettings(val bot: MinecraftBot, val identifier: WorldId
         if (block.safe) return 0f
         if (!this.safeToBreak(block)) return 100f
         toBreak.add(PathBreakInfo(block))
-        val digTime = block.block.digTime(bot.player.inventory.heldItem, false, false)
-        // TODO find out best item
-        return (1 + digTime * 0.003f) * this.digCost
+        val digTime = block.block.digTime(Item.AIR, false, false)
+        return 1 + digTime * 0.3f * this.digCost + exclusionBreak(block)
     }
 
     open fun getMoveJumpUp(node: Move, dir: Pair<Int, Int>, neighbors: MutableList<Move>) {

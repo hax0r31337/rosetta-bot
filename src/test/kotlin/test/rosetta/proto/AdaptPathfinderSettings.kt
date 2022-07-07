@@ -19,6 +19,6 @@ class AdaptPathfinderSettings(bot: MinecraftBot, identifier: AdaptWorldIdentifie
     }
 
     override fun bridgeableItem(item: Item): Boolean {
-        return item.id == 1 || item.id == 3
+        return false
     }
 }

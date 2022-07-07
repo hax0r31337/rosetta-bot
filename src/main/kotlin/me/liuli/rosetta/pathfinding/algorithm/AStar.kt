@@ -3,6 +3,7 @@ package me.liuli.rosetta.pathfinding.algorithm
 import me.liuli.rosetta.pathfinding.PathfinderSettings
 import me.liuli.rosetta.pathfinding.goals.IGoal
 import me.liuli.rosetta.pathfinding.path.Move
+import me.liuli.rosetta.util.vec.Vec3i
 import me.liuli.rosetta.world.Chunk
 
 class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGoal) {
@@ -10,7 +11,7 @@ class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGo
     private val closedDataSet = hashSetOf<Int>()
     private val openHeap = BinaryHeapOpenSet()
     private val openDataMap = hashMapOf<Int, PathNode>()
-    private val visitedChunks = hashSetOf<Long>()
+    val visitedChunks = hashSetOf<Long>()
     private val maxCost: Int
     private var computedTime = 0
 
@@ -37,7 +38,7 @@ class AStar(start: Move, private val settings: PathfinderSettings, val goal: IGo
                 return makeResult(ResultStatus.TIMEOUT, this.bestNode)
             }
             val node = this.openHeap.pop()
-            if (this.goal.isEnd(node.data)) {
+            if (this.goal.isEnd(Vec3i(node.data.x, node.data.y, node.data.z))) {
                 computedTime += (System.currentTimeMillis() - computeStartTime).toInt()
                 return makeResult(ResultStatus.SUCCESS, node)
             }

@@ -22,7 +22,7 @@ open class PlayerInput {
     }
 
     companion object {
-        fun clone(input: PlayerInput): PlayerInput {
+        fun cloneFrom(input: PlayerInput): PlayerInput {
             return PlayerInput().also {
                 it.forward = input.forward
                 it.back = input.back

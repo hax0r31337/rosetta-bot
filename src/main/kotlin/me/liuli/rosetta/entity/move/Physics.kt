@@ -13,6 +13,7 @@ import me.liuli.rosetta.world.World
 import me.liuli.rosetta.world.WorldIdentifier
 import me.liuli.rosetta.world.block.AxisAlignedBB
 import me.liuli.rosetta.world.block.Block
+import me.liuli.rosetta.world.block.Shape
 import me.liuli.rosetta.world.data.EnumBlockFacing
 import kotlin.math.*
 
@@ -46,8 +47,8 @@ class Physics(private val world: World, private val player: ISimulatable, privat
         }
         applyWaterFlow()
         val lavaBB = player.axisAlignedBB.apply { contract(0.1, 0.4, 0.1) }
-        isInLava = world.getSurroundingBlocks(lavaBB) { it, _, _, _ ->
-            identifier.isLava(it)
+        isInLava = world.getSurroundingBlocks(lavaBB) { it, x, y, z ->
+            identifier.isLava(it) && AxisAlignedBB(x.toDouble(), y.toDouble(), z.toDouble(), Shape.SHAPE_BLOCK).intersects(lavaBB)
         }.isNotEmpty()
 
         val motion = player.motion
