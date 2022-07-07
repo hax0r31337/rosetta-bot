@@ -429,8 +429,6 @@ class Pathfinder(val settings: PathfinderSettings, val physics: Physics) : Liste
         settings.bot.controller.forward = true
         settings.bot.controller.jump = false
 
-        println(nextPoint)
-
         if (physics.isInWater) {
             settings.bot.controller.jump = true
             settings.bot.player.sprinting = false

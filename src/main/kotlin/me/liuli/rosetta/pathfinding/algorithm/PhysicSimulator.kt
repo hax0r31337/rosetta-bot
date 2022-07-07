@@ -38,13 +38,15 @@ class PhysicSimulator(private val bot: MinecraftBot, private val identifier: Wor
 
     fun getReached(path: MutableList<Move>): (FakePlayer) -> Boolean {
         return {
-            val node = path[0]
-            val delta = it.position.copy().apply {
-                x = node.postX - x
-                y = node.postY - y
-                z = node.postZ - z
-            }
-            abs(delta.x) <= 0.35 && abs(delta.z) <= 0.35 && abs(delta.y) < 1
+            if (path.isNotEmpty()) {
+                val node = path[0]
+                val delta = it.position.copy().apply {
+                    x = node.postX - x
+                    y = node.postY - y
+                    z = node.postZ - z
+                }
+                abs(delta.x) <= 0.35 && abs(delta.z) <= 0.35 && abs(delta.y) < 1
+            } else false
         }
     }
 
